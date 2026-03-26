@@ -186,7 +186,6 @@
 <script>
 import {mapState, mapMutations} from "vuex";
 import dayjs from "dayjs";
-import ResizeObserver from "resize-observer-polyfill";
 import BScroll from "@better-scroll/core";
 import MouseWheel from "@better-scroll/mouse-wheel";
 import ScrollBar from "@better-scroll/scroll-bar";
@@ -465,7 +464,7 @@ export default {
         this.widthOfBlocksWrapper = cr.width;
       });
     });
-    this.resizeObserver = new ResizeObserver(observeContainer);
+    this.resizeObserver = new window.ResizeObserver(observeContainer);
     this.resizeObserver.observe(this.$refs.blocksWrapper);
 
     this.scroller = new BScroll("#iscroll", {

@@ -10,8 +10,7 @@ export default defineConfig({
     vue({
       template: {
         compilerOptions: {
-          preserveWhitespace: true,
-          whitespace: "preserve"
+          preserveWhitespace: false,
         },
       },
     }),

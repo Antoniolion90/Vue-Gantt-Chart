@@ -160,7 +160,8 @@
 
 <script>
 import dayjs from "dayjs";
-import {cloneDeep} from "lodash";
+import {cloneDeep} from "lodash-es";
+import {debounce} from "@/utils/tool.js";
 import {mapMutations, mapState} from "vuex";
 import checkAdjust from "./components/demo/checkAdjust.vue";
 import {
@@ -245,23 +246,20 @@ export default {
       classifyTypeList: [],
       rawData: [],
       findList: [],
-      currentFindIndex: 0
+      currentFindIndex: 0,
+      dataSeed: 0
     };
   },
   watch: {
     showRowList() {
       this.classifyData();
     },
-    cellWidth(){
-      setTimeout(()=>{
-        this.$bus.$emit("refresh");
-      },500)
-    },
-    scale(){
-      setTimeout(()=>{
-        this.$bus.$emit("refresh");
-      },500)
-    }
+    cellWidth: debounce(function() {
+      this.$bus.$emit("refresh");
+    }, 300),
+    scale: debounce(function() {
+      this.$bus.$emit("refresh");
+    }, 300)
   },
   computed: {
     ...mapState([
@@ -322,9 +320,10 @@ export default {
       return _getWidthAbout2Times(start, end, options);
     },
     initData() {
-      let list = mockDatas(this.rowNum, this.colNum, this.times);
+      this.dataSeed = Date.now();
+      let list = mockDatas(this.rowNum, this.colNum, this.times, this.dataSeed);
       this.setRawRowList(list);
-      this.setShowRowList(cloneDeep(list));
+      this.setShowRowList([...list]);
       this.classifyData();
     },
     updateTimeLines(timeA, timeB) {
@@ -420,7 +419,7 @@ export default {
         this.datas = [
           {
             groupType: {},
-            children: cloneDeep(this.showRowList),
+            children: [...this.showRowList],
             isOpen: true
           }
         ];
@@ -431,8 +430,7 @@ export default {
       /* Iterate each type object, filter matching rows, and append them to each gantt group children */
       classifyList.forEach(classifyItem => {
         let tempObj = Object.assign({}, classifyItem);
-        tempObj["children"] = [];
-        let blockRowList = cloneDeep(this.showRowList);
+        let blockRowList = this.showRowList;
         for (let filterKey in classifyItem) {
           blockRowList = blockRowList.filter(bridgeItem => {
             if (filterKey === "speed") {
@@ -446,17 +444,12 @@ export default {
             return bridgeItem[filterKey] == classifyItem[filterKey];
           });
         }
-        blockRowList.forEach((item, index) => {
-          // Add rawIndex for each row; used to calculate each row top position
-          item.rawIndex = index;
-        });
         tempObj["children"] = blockRowList;
         tempObj["groupType"] = classifyItem;
         tempObj["isOpen"] = true;
         groupList.push(tempObj);
       });
       this.datas = groupList;
-      this.classifyDialogVisible = false;
     },
     /* Search */
     filterSearchValue() {

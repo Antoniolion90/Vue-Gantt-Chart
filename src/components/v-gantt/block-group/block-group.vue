@@ -60,29 +60,18 @@ export default {
 
   methods: {
     computedRangeList(totalList) {
-      return totalList.filter((item) => {
-        return this.isInRenderingTimeRange(item.start, item.end);
-      });
-    },
-    /**
-     * Determine whether a time range crosses the render window, or whether a time point is inside it
-     *
-     * @returns {boolean}
-     * @param timeStart
-     * @param timeEnd
-     */
-    isInRenderingTimeRange(timeStart, timeEnd) {
       if (!this.precondition) {
-        return false;
+        return [];
       }
-
       const { startTimeOfRenderArea, endTimeOfRenderArea } = this;
-      const timeStartToMs = new Date(timeStart).getTime();
-      const timeEndToMs = new Date(timeEnd).getTime();
-      return (
-        timeStartToMs <= endTimeOfRenderArea &&
-        timeEndToMs >= startTimeOfRenderArea
-      );
+      return totalList.filter((item) => {
+        const timeStartToMs = new Date(item.start).getTime();
+        const timeEndToMs = new Date(item.end).getTime();
+        return (
+          timeStartToMs <= endTimeOfRenderArea &&
+          timeEndToMs >= startTimeOfRenderArea
+        );
+      });
     }
   }
 };
