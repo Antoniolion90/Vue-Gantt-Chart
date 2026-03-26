@@ -45,7 +45,7 @@
       <div
         class="gantt-leftbar-item"
         :style="{
-          top: data.rawIndex * cellHeight + 'px',
+          top: (startRenderNum + index) * cellHeight + 'px',
           height: `${cellHeight}px`
         }"
         v-for="(data, index) in showDatas"

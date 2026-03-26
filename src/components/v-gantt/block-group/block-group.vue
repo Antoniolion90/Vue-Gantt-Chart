@@ -9,10 +9,13 @@
       }"
       ref="wrapperElement"
     >
-      <template v-for="rowItem in showDatas">
+    <template v-for="(rowItem, index) in showDatas">
         <slot
           name="BlockRow"
           :rowData="rowItem"
+          :style="{
+            top: (startRenderNum + index) * cellHeight + 'px'
+          }"
           :showList="computedRangeList(rowItem.gtArray)"
         ></slot>
       </template>

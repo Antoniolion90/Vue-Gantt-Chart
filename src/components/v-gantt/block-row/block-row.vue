@@ -2,7 +2,6 @@
   <div
     class="gantt-block-row"
     :style="{
-      top: rowData.rawIndex * cellHeight + 'px',
       height: `${cellHeight}px`
     }"
   >

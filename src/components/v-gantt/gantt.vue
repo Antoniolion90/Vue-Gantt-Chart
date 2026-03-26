@@ -138,13 +138,14 @@
                   :preload="preload"
                   :style="{ width: totalWidth + 'px' }"
               >
-                <template v-slot:BlockRow="{ rowData, showList }">
+                <template v-slot:BlockRow="{ rowData, showList, style }">
                   <BlockRow
                       v-contextmenu:blockRowMenu
                       :cellHeight="cellHeight"
                       :key="rowData.id"
                       :rowData="rowData"
                       :showList="showList"
+                      :style="style"
                       @dragover.prevent
                       @drop="dropToRow($event, rowData)"
                       @mousedown.right.stop="
@@ -481,7 +482,7 @@ export default {
       this.scroller?.refresh();
     }, 1000);
 
-    this.scroller.on("scroll", this.scrollHandler);
+    this.scroller.on("scroll", throttle(this.scrollHandler));
     this.onScrollToPosition = (position) => {
       this.scroller?.scrollTo(position.x, position.y, 600);
     };
@@ -497,7 +498,6 @@ export default {
     this.$bus.$off("refresh", this.onRefresh);
 
     if (this.scroller) {
-      this.scroller.off("scroll", this.scrollHandler);
       this.scroller.destroy();
       this.scroller = null;
     }
@@ -523,21 +523,17 @@ export default {
     ]),
     scrollHandler() {
       if (!this.scroller) return;
-      this.selector.gantt_timeline.style.transform = `translateX(${this.scroller.x}px)`;
-      this.selector.gantt_leftbar.style.transform = `translateY(${this.scroller.y}px)`;
-      this.selector.gantt_markArea.style.left = this.scroller.x + "px";
-      this.scrollLeft = -this.scroller.x;
-      this.scrollTop = -this.scroller.y;
+      const { x, y } = this.scroller;
+      this.selector.gantt_timeline.style.transform = `translateX(${x}px)`;
+      this.selector.gantt_leftbar.style.transform = `translateY(${y}px)`;
+      this.selector.gantt_markArea.style.left = x + "px";
+      this.scrollLeft = -x;
+      this.scrollTop = -y;
+
       /* Calculate time from scroll position */
-
-      let width = this.scroller.x;
-
-      let mileSeconds = -(width / this.cellWidth) * this.scale * 60 * 1000;
-
+      let mileSeconds = -(x / this.cellWidth) * this.scale * 60 * 1000;
       let scrollTime = new Date(this.startTime).getTime() + mileSeconds;
-
       this.currentDay = dayjs(scrollTime);
-
     },
     /* Scroll forward by one day */
     scrollPreDay() {

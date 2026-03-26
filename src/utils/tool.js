@@ -50,30 +50,21 @@ export function debounce(fn, interval = 500, immediate = false) {
   };
 }
 
-export  function throttle(fn, interval = 100) {
-  // fn is the function to execute, interval is delay time
-  var _self = fn, // Save function reference for delayed call
-    timer, // timer
-    firstTime = true; // Is first call
+export function throttle(fn, interval = 16) {
+  let timer = null;
+  let lastArgs = null;
+  let lastContext = null;
+
   return function() {
-    // Return a function to keep closure state
-    var args = arguments, // Cache variables
-      _me = this;
-    if (firstTime) {
-      // No delay on first call
-      _self.apply(_me, args);
-      return (firstTime = false);
+    lastArgs = arguments;
+    lastContext = this;
+
+    if (!timer) {
+      timer = requestAnimationFrame(() => {
+        fn.apply(lastContext, lastArgs);
+        timer = null;
+      });
     }
-    if (timer) {
-      // Existing timer means previous delayed call is not finished
-      return false;
-    }
-    timer = setTimeout(function() {
-      // Execute after a delay
-      clearTimeout(timer);
-      timer = null;
-      _self.apply(_me, args);
-    }, interval);
   };
 }
 

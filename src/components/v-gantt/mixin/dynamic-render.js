@@ -90,45 +90,15 @@ const dynamicRender = {
      * Split out data that should be shown in DOM
      */
     sliceData() {
-      if (!this.wrapperElement) return false;
-
       const {
-        unVisibleHeight,
         heightOfBlocksWrapper,
         cellHeight,
         preload,
-        datas
+        datas,
+        scrollTop,
+        groupIndex,
+        datas: groupDatas
       } = this;
-
-      const ClientRect = this.wrapperElement.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      let startPosition = 0;
-      let endPosition = 0;
-      const top = ClientRect.top;
-      const bottom = ClientRect.bottom;
-      this.top = top;
-      this.bottom = bottom;
-      if (top <= 0) {
-        startPosition = Math.abs(top) + unVisibleHeight;
-        endPosition = startPosition + heightOfBlocksWrapper;
-        if (bottom > unVisibleHeight && bottom <= windowHeight) {
-          endPosition = startPosition + bottom;
-        } else if (bottom <= unVisibleHeight) {
-          this.startRenderNum = 0;
-          this.endRenderNum = 0;
-          return;
-        }
-      } else if (top > 0 && top <= unVisibleHeight) {
-        startPosition = unVisibleHeight - top;
-        endPosition = startPosition + heightOfBlocksWrapper;
-      } else if (top > unVisibleHeight && top <= windowHeight) {
-        startPosition = 0;
-        endPosition = windowHeight - top;
-      } else if (top > windowHeight) {
-        this.startRenderNum = 0;
-        this.endRenderNum = 0;
-        return;
-      }
 
       // No height means no need to render elements
       if (heightOfBlocksWrapper === 0 || cellHeight === 0) {
@@ -143,12 +113,40 @@ const dynamicRender = {
         this.endRenderNum = datas.length;
         return;
       }
-      const startRenderNum = Math.ceil(startPosition / cellHeight) - preload;
-      this.startRenderNum = startRenderNum < 0 ? 0 : startRenderNum;
 
-      const endRenderNum = Math.ceil(endPosition / cellHeight) + preload;
-      this.endRenderNum =
-        endRenderNum > datas.length ? datas.length : endRenderNum;
+      // Calculate the start position of the group relative to the container
+      // This is a fixed value for each group, assuming row heights are constant
+      let groupTop = 0;
+      const allDatas = this.$parent.datas || [];
+      for (let i = 0; i < groupIndex; i++) {
+        const group = allDatas[i];
+        const groupRows = group.isOpen ? (group.children ? group.children.length : 0) + 1 : 1;
+        groupTop += groupRows * cellHeight;
+      }
+
+      const groupHeight = (this.isOpen ? groupDatas.length + 1 : 1) * cellHeight;
+      const groupBottom = groupTop + groupHeight;
+
+      const viewportTop = scrollTop;
+      const viewportBottom = scrollTop + heightOfBlocksWrapper;
+
+      // If the group is completely outside the viewport
+      if (groupBottom < viewportTop || groupTop > viewportBottom) {
+        this.startRenderNum = 0;
+        this.endRenderNum = 0;
+        return;
+      }
+
+      // Calculate relative viewport within the group
+      // The group header takes 1 cellHeight
+      const relativeViewportTop = Math.max(0, viewportTop - groupTop - cellHeight);
+      const relativeViewportBottom = Math.min(groupHeight, viewportBottom - groupTop - cellHeight);
+
+      const startRenderNum = Math.floor(relativeViewportTop / cellHeight) - preload;
+      this.startRenderNum = Math.max(0, startRenderNum);
+
+      const endRenderNum = Math.ceil(relativeViewportBottom / cellHeight) + preload;
+      this.endRenderNum = Math.min(datas.length, endRenderNum);
     }
   }
 };
