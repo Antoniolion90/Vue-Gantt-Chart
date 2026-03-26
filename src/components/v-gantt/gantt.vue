@@ -186,7 +186,13 @@
 import {mapState, mapMutations} from "vuex";
 import dayjs from "dayjs";
 import ResizeObserver from "resize-observer-polyfill";
-import IScroll from "iscroll/build/iscroll-probe";
+import BScroll from "@better-scroll/core";
+import MouseWheel from "@better-scroll/mouse-wheel";
+import ScrollBar from "@better-scroll/scroll-bar";
+
+BScroll.use(MouseWheel);
+BScroll.use(ScrollBar);
+
 import {
   calcScalesAbout2Times,
   getBeginTimeOfTimeLine,
@@ -461,29 +467,15 @@ export default {
     this.resizeObserver = new ResizeObserver(observeContainer);
     this.resizeObserver.observe(this.$refs.blocksWrapper);
 
-    this.scroller = new IScroll("#iscroll", {
+    this.scroller = new BScroll("#iscroll", {
       probeType: 3,
       click: true,
       scrollX: true,
       scrollY: true,
-      freeScroll: false,
+      freeScroll: true,
       mouseWheel: true,
-      mousedown: true,
-      scrollbars: true,
-      interactiveScrollbars: true,
-      // shrinkScrollbars: 'scale',
-      fadeScrollbars: false,
+      scrollbar: true,
       useTransition: true
-      // keyBindings: {
-      //   pageUp: 33,
-      //   pageDown: 34,
-      //   end: 35,
-      //   home: 36,
-      //   left: 37,
-      //   up: 38,
-      //   right: 39,
-      //   down: 40
-      // }
     });
     setTimeout(() => {
       this.scroller?.refresh();
@@ -667,6 +659,6 @@ export default {
 </script>
 
 <style lang="scss">
-@import "gantt";
+@use "gantt";
 </style>
 

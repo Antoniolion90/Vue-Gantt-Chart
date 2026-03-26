@@ -30,5 +30,25 @@ export default defineConfig({
   },
   server: {
     port: 3001,
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('element-plus')) {
+              return 'element-plus';
+            }
+            if (id.includes('@faker-js')) {
+              return 'faker';
+            }
+            if (id.includes('lodash')) {
+              return 'lodash';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
   }
 })

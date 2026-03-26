@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import Mock from "mockjs";
+import { faker } from "@faker-js/faker";
 
 const colorList = [
   "(252, 105, 100)",
@@ -14,46 +14,45 @@ const nameList = "Hope,SwiftWing,Lightbringer,Scout,PowerGod,Officer,LightningMe
 
 const typeList = "🚅,🚈,🚄".split(",");
 
-const Random = Mock.Random;
 let colNum = 10;
 let times = [new Date(2000, 10, 10, 10, 10), new Date(2000, 10, 11, 10, 10)];
 
 
 function generateRow() {
   let rowId = "JHR" +
-    Random.natural(100, 999) +
-    Random.character("upper") +
-    Random.character("upper");
-  let rowType = Random.pick(typeList);
-  let rowSpeed = Random.natural(0, 200);
-  let template = {
-    name: () => Random.pick(nameList),
+    faker.number.int({ min: 100, max: 999 }) +
+    faker.string.alpha({ length: 1, casing: 'upper' }) +
+    faker.string.alpha({ length: 1, casing: 'upper' });
+  let rowType = faker.helpers.arrayElement(typeList);
+  let rowSpeed = faker.number.int({ min: 0, max: 200 });
+
+  return {
+    name: faker.helpers.arrayElement(nameList),
     id: rowId,
     type: rowType,
     speed: rowSpeed,
-    colorPair: () => {
-      let a = "rgb" + Random.pick(colorList);
+    colorPair: (() => {
+      let a = "rgb" + faker.helpers.arrayElement(colorList);
       return {
         dark: a.replace(")", ",0.8)"),
         light: a.replace(")", ",0.1)")
       };
-    },
-    gtArray: () => {
+    })(),
+    gtArray: (() => {
       let temp = [];
       let i = 0;
-      let j = Random.natural(colNum - 1, colNum);
+      let j = faker.number.int({ min: colNum - 1, max: colNum });
       let tempStart = dayjs(times[0]);
       let tempEnd = dayjs(times[0]);
 
       while (i < j) {
-        tempStart = tempEnd.add(Random.natural(1, 6), "hour");
-        tempEnd = tempStart.add(Random.natural(2, 6), "hour");
+        tempStart = tempEnd.add(faker.number.int({ min: 1, max: 6 }), "hour");
+        tempEnd = tempStart.add(faker.number.int({ min: 2, max: 6 }), "hour");
         temp.push({
           id:
-            Random.character("upper") +
-            Random.character("upper") +
-            Random.natural(1000, 9999),
-          passenger: Random.natural(10, 200),
+            faker.string.alpha({ length: 2, casing: 'upper' }) +
+            faker.number.int({ min: 1000, max: 9999 }),
+          passenger: faker.number.int({ min: 10, max: 200 }),
           start: tempStart.toString(),
           end: tempEnd.toString(),
           type: rowType,
@@ -63,17 +62,16 @@ function generateRow() {
         i++;
       }
       return temp;
-    }
+    })()
   };
-  return Mock.mock(template)
-
 }
 
 export function mockDatas(nums, col, t) {
   colNum = col;
   times = t;
   let datas = [];
-  for (let i = 0, j = Random.natural(nums, nums); i < j; i++) {
+  let j = faker.number.int({ min: nums, max: nums });
+  for (let i = 0; i < j; i++) {
     datas.push(Object.assign({rawIndex: i}, generateRow()));
   }
   return datas;
