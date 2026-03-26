@@ -27,7 +27,6 @@
             v-model="searchValue"
             placeholder="编号"
             clearable
-            prefix-icon="el-icon-search"
             style="width: 120px"
             @clear="clearSearch"
         />
@@ -82,18 +81,20 @@
               <el-checkbox v-model="hideHeader">隐藏头部</el-checkbox>
             </el-form-item>
             <el-form-item>
-              <el-checkbox :value="showMovedBlock" @change="setShowMovedBlock" title="是否显示拖拽之前的甘特块，若勾选，显示为黑色阴影状">
+              <el-checkbox :model-value="showMovedBlock" @change="setShowMovedBlock" title="是否显示拖拽之前的甘特块，若勾选，显示为黑色阴影状">
                 显示调整前任务
               </el-checkbox>
             </el-form-item>
             <el-form-item>
-              <el-checkbox :value="showDragConfirm" @change="setShowDragConfirm" title="调整任务时是否显示确认弹窗">显示调整确认弹窗
+              <el-checkbox :model-value="showDragConfirm" @change="setShowDragConfirm" title="调整任务时是否显示确认弹窗">显示调整确认弹窗
               </el-checkbox>
             </el-form-item>
           </el-form>
 
         </div>
-        <el-button slot="reference" type="primary" style="margin-left: 10px;">甘特配置项</el-button>
+        <template #reference>
+          <el-button type="primary" style="margin-left: 10px;">甘特配置项</el-button>
+        </template>
       </el-popover>
 
     </div>
@@ -118,7 +119,7 @@
     </div>
     <el-dialog
         title="数据分类"
-        :visible.sync="classifyDialogVisible">
+        v-model="classifyDialogVisible">
       <el-form class="classify-form">
         <el-form-item label="类型：">
           <el-checkbox-group v-model="selectRowTypes">
@@ -146,7 +147,7 @@
     </el-dialog>
     <el-dialog
         title="任务调整"
-        :visible.sync="checkDialogVisible"
+        v-model="checkDialogVisible"
         width="1000px">
 
       <check-adjust ref="checkAdjust" @closeDialog="checkDialogVisible=false"/>
@@ -275,21 +276,29 @@ export default {
   },
   mounted() {
     this.initData();
-    this.$bus.$on("updateTimeLines", (timeParam) => {
+    this.onUpdateTimeLines = (timeParam) => {
       this.updateTimeLines(timeParam.start, timeParam.end);
-    });
-
-    this.$bus.$on("toggleGroupOpen", (index) => {
+    };
+    this.onToggleGroupOpen = (index) => {
       this.toggleGroupOpen(index);
-    });
-
-    this.$bus.$on("updateCurrentTime", (time) => {
-      this.currentTime = time
-    });
-    this.$bus.$on("dragTask", () => {
+    };
+    this.onUpdateCurrentTime = (time) => {
+      this.currentTime = time;
+    };
+    this.onDragTask = () => {
       this.dragTask();
-    });
+    };
 
+    this.$bus.$on("updateTimeLines", this.onUpdateTimeLines);
+    this.$bus.$on("toggleGroupOpen", this.onToggleGroupOpen);
+    this.$bus.$on("updateCurrentTime", this.onUpdateCurrentTime);
+    this.$bus.$on("dragTask", this.onDragTask);
+  },
+  beforeUnmount() {
+    this.$bus.$off("updateTimeLines", this.onUpdateTimeLines);
+    this.$bus.$off("toggleGroupOpen", this.onToggleGroupOpen);
+    this.$bus.$off("updateCurrentTime", this.onUpdateCurrentTime);
+    this.$bus.$off("dragTask", this.onDragTask);
   },
   methods: {
     ...mapMutations([

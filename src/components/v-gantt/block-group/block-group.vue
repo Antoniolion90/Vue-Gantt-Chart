@@ -12,7 +12,7 @@
       <template v-for="rowItem in showDatas">
         <slot
           name="BlockRow"
-          :row-data="rowItem"
+          :rowData="rowItem"
           :showList="computedRangeList(rowItem.gtArray)"
         ></slot>
       </template>

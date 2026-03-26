@@ -17,7 +17,7 @@
         </el-table-column>
         <el-table-column
             :label="'已选('+ tableSelection.length+'/'+ adjustList.length+')'">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag :type="scope.row.conflictList.length===0?'success':'danger'" size="middle">
               {{ scope.row.conflictList.length === 0 ? "无冲突" : "有冲突" }}
             </el-tag>
@@ -28,19 +28,19 @@
             label="操作类型"
             width="80"
             align="center">
-          <template slot-scope="scope">{{ scope.row.adjustType }}</template>
+          <template #default="scope">{{ scope.row.adjustType }}</template>
         </el-table-column>
         <el-table-column
             label="目标"
             width="80"
             align="center">
-          <template slot-scope="scope">{{ scope.row.targetRowId }}</template>
+          <template #default="scope">{{ scope.row.targetRowId }}</template>
         </el-table-column>
         <el-table-column
             label="校验结果"
             width="80"
             align="center">
-          <template slot-scope="scope">{{ scope.row.conflictList.length }}</template>
+          <template #default="scope">{{ scope.row.conflictList.length }}</template>
         </el-table-column>
       </el-table>
     </div>
@@ -162,7 +162,7 @@ export default {
           adjustObj.conflictList = adjustObj.conflictList.filter(item => {
             return item.isIgnore === false;
           });
-          this.$set(this.adjustList, adjustIndex, adjustObj);
+          this.adjustList[adjustIndex] = adjustObj;
         });
         this.$refs.singleTable.setCurrentRow(this.adjustList[0]);
       }

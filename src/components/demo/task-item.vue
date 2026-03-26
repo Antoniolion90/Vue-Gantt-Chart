@@ -10,46 +10,47 @@
         zIndex: zIndex
       }"
   >
-        <el-popover placement="bottom" trigger="manual" :open-delay="100" v-model="showDetail">
-    <div
-      slot="reference"
-      :class="['plan',{
+    <el-popover placement="bottom" trigger="manual" :open-delay="100" v-model:visible="showDetail">
+      <template #reference>
+        <div
+          :class="['plan',{
           'highlight':isHighlight
         },
         timeStatusClass,
         cutClass,
         movedStatusClass
         ]"
-      @dblclick="changeZIndex"
-      @pointerdown.left="showDetailInfo"
-      @mouseleave="hideDetailInfo"
-      @dragleave="hideDetailInfo"
-    >
-      <div class="runTime">
-        <span>S:{{ startToString }}</span>
-        <span>E:{{ endToString }}</span>
-      </div>
-      <div class="middle">编号{{ blockData.id }}</div>
-      <div class="passenger">{{blockData.passenger}}人</div>
-    </div>
+          @dblclick="changeZIndex"
+          @pointerdown.left="showDetailInfo"
+          @mouseleave="hideDetailInfo"
+          @dragleave="hideDetailInfo"
+        >
+          <div class="runTime">
+            <span>S:{{ startToString }}</span>
+            <span>E:{{ endToString }}</span>
+          </div>
+          <div class="middle">编号{{ blockData.id }}</div>
+          <div class="passenger">{{blockData.passenger}}人</div>
+        </div>
+      </template>
 
-    <div class="detail">
-      <ul>
-        <li>
-          <span>发车时间：</span><span>{{ startToString }}</span>
-        </li>
-        <li>
-          <span>到站时间：</span><span>{{ endToString }}</span>
-        </li>
-        <li>
-          <span>载员：</span><span>{{ blockData.passenger }}</span>
-        </li>
-        <li>
-          <span>编号：</span><span>{{ blockData.id }}</span>
-        </li>
-      </ul>
-    </div>
-        </el-popover>
+      <div class="detail">
+        <ul>
+          <li>
+            <span>发车时间：</span><span>{{ startToString }}</span>
+          </li>
+          <li>
+            <span>到站时间：</span><span>{{ endToString }}</span>
+          </li>
+          <li>
+            <span>载员：</span><span>{{ blockData.passenger }}</span>
+          </li>
+          <li>
+            <span>编号：</span><span>{{ blockData.id }}</span>
+          </li>
+        </ul>
+      </div>
+    </el-popover>
   </div>
 
 </template>
@@ -168,6 +169,10 @@ export default {
   mounted() {
     this.$bus.$on('hideDetailInfo', this.hideDetailInfo)
     this.$bus.$on('upzIndex', this.upZIndex)
+  },
+  beforeUnmount() {
+    this.$bus.$off('hideDetailInfo', this.hideDetailInfo)
+    this.$bus.$off('upzIndex', this.upZIndex)
   }
 }
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div class="gantt-chart">
-    <v-contextmenu @contextmenu.stop.prevent.native ref="blockItemMenu">
+    <v-contextmenu ref="blockItemMenu">
       <v-contextmenu-item class="right-menu-item" @click="moveCurrentBlock"
       >复制
       </v-contextmenu-item>
@@ -8,7 +8,7 @@
       >交换
       </v-contextmenu-item>
     </v-contextmenu>
-    <v-contextmenu @contextmenu.stop.prevent.native ref="blockRowMenu">
+    <v-contextmenu ref="blockRowMenu">
       <v-contextmenu-item class="right-menu-item" @click="pasteBlock"
       >粘贴
       </v-contextmenu-item>
@@ -30,9 +30,9 @@
           }"
         >
           <div class="date-control">
-            <span class="el-icon-caret-left btn-date-ctrl" @click="scrollPreDay"></span>
+            <span class="btn-date-ctrl" @click="scrollPreDay">◀</span>
             <span class="current-date">{{ currentDay.format('MM-DD') }}</span>
-            <span class="el-icon-caret-right btn-date-ctrl" @click="scrollNextDay"></span>
+            <span class="btn-date-ctrl" @click="scrollNextDay">▶</span>
           </div>
         </div>
         <div class="gantt-header-timeline">
@@ -145,9 +145,9 @@
                       :key="rowData.id"
                       :rowData="rowData"
                       :showList="showList"
-                      @dragover.native.prevent
-                      @drop.native="dropToRow($event, rowData)"
-                      @mousedown.native.right.stop="
+                      @dragover.prevent
+                      @drop="dropToRow($event, rowData)"
+                      @mousedown.right.stop="
                       handleRightClickRow($event, rowData)
                     "
                   >
@@ -160,13 +160,13 @@
                           :cellHeight="cellHeight"
                           :key="blockData.id"
                           :blockData="blockData"
-                          @dragover.native.prevent
-                          @pointerdown.native.stop
-                          @contextmenu.native.stop
-                          @mousedown.native.left.stop="
+                          @dragover.prevent
+                          @pointerdown.stop
+                          @contextmenu.stop
+                          @mousedown.left.stop="
                           handleLeftClickBlock($event, rowData, blockData)
                         "
-                          @mousedown.native.right.stop="
+                          @mousedown.right.stop="
                           handleRightClickBlock($event, rowData, blockData)
                         "
                       />
@@ -207,8 +207,6 @@ import BlockRow from "./block-row/block-row.vue";
 import MarkLine from "./mark-line/index.vue";
 import TaskItem from "@/components/demo/task-item.vue";
 import MenuItem from "@/components/demo/menu-item.vue";
-
-let scroller = null;
 export default {
   name: "Gantt",
 
@@ -326,7 +324,11 @@ export default {
       preTouchPosition: {
         x: 0,
         y: 0
-      }
+      },
+      scroller: null,
+      resizeObserver: null,
+      onScrollToPosition: null,
+      onRefresh: null
     };
   },
 
@@ -440,7 +442,7 @@ export default {
   watch: {
     totalHeight() {
       this.$nextTick(() => {
-        scroller.refresh();
+        this.scroller?.refresh();
         this.scrollHandler();
       });
     }
@@ -456,14 +458,10 @@ export default {
         this.widthOfBlocksWrapper = cr.width;
       });
     });
-    const observer = new ResizeObserver(observeContainer);
-    observer.observe(this.$refs.blocksWrapper);
-    this.$once("hook:beforeDestroy", () => {
-      observer.disconnect();
-      this.releaseSelector();
-    });
+    this.resizeObserver = new ResizeObserver(observeContainer);
+    this.resizeObserver.observe(this.$refs.blocksWrapper);
 
-    scroller = new IScroll("#iscroll", {
+    this.scroller = new IScroll("#iscroll", {
       probeType: 3,
       click: true,
       scrollX: true,
@@ -488,16 +486,36 @@ export default {
       // }
     });
     setTimeout(() => {
-      scroller.refresh();
+      this.scroller?.refresh();
     }, 1000);
 
-    scroller.on("scroll", this.scrollHandler);
-    this.$bus.$on("scrollToPosition", (position) => {
-      scroller.scrollTo(position.x, position.y, 600);
-    });
-    this.$bus.$on("refresh",()=>{
-      scroller.refresh();
-    })
+    this.scroller.on("scroll", this.scrollHandler);
+    this.onScrollToPosition = (position) => {
+      this.scroller?.scrollTo(position.x, position.y, 600);
+    };
+    this.onRefresh = () => {
+      this.scroller?.refresh();
+    };
+
+    this.$bus.$on("scrollToPosition", this.onScrollToPosition);
+    this.$bus.$on("refresh", this.onRefresh);
+  },
+  beforeUnmount() {
+    this.$bus.$off("scrollToPosition", this.onScrollToPosition);
+    this.$bus.$off("refresh", this.onRefresh);
+
+    if (this.scroller) {
+      this.scroller.off("scroll", this.scrollHandler);
+      this.scroller.destroy();
+      this.scroller = null;
+    }
+
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+
+    this.releaseSelector();
   },
 
   methods: {
@@ -512,14 +530,15 @@ export default {
       "setHandleRow"
     ]),
     scrollHandler() {
-      this.selector.gantt_timeline.style.transform = `translateX(${scroller.x}px)`;
-      this.selector.gantt_leftbar.style.transform = `translateY(${scroller.y}px)`;
-      this.selector.gantt_markArea.style.left = scroller.x + "px";
-      this.scrollLeft = -scroller.x;
-      this.scrollTop = -scroller.y;
+      if (!this.scroller) return;
+      this.selector.gantt_timeline.style.transform = `translateX(${this.scroller.x}px)`;
+      this.selector.gantt_leftbar.style.transform = `translateY(${this.scroller.y}px)`;
+      this.selector.gantt_markArea.style.left = this.scroller.x + "px";
+      this.scrollLeft = -this.scroller.x;
+      this.scrollTop = -this.scroller.y;
       /*计算滚动位置的时间*/
 
-      let width = scroller.x;
+      let width = this.scroller.x;
 
       let mileSeconds = -(width / this.cellWidth) * this.scale * 60 * 1000;
 
@@ -543,7 +562,9 @@ export default {
       } else {
         this.currentDay = tempDay;
         let width = this.getWidthAbout2Times(this.startTime, tempDay);
-        scroller.scrollTo(-width, scroller.y, 400);
+        if (this.scroller) {
+          this.scroller.scrollTo(-width, this.scroller.y, 400);
+        }
       }
     },
     /*向后滚动一天*/
@@ -560,7 +581,9 @@ export default {
       } else {
         this.currentDay = tempDay;
         let width = this.getWidthAbout2Times(this.startTime, tempDay);
-        scroller.scrollTo(-width, scroller.y, 400);
+        if (this.scroller) {
+          this.scroller.scrollTo(-width, this.scroller.y, 400);
+        }
       }
     },
     getWidthAbout2Times(start, end) {

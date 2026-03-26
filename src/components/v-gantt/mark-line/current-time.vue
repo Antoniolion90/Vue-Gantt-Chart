@@ -19,17 +19,19 @@ export default {
   },
   data() {
     return {
-      currentTime: dayjs().toString()
+      currentTime: dayjs().toString(),
+      timer: null
     };
   },
-  created() {
-    const timeNow = setInterval(() => {
+  mounted() {
+    this.timer = setInterval(() => {
       this.currentTime = dayjs().toString();
       this.$bus.$emit("updateCurrentTime", dayjs());
     }, 1000);
-    this.$once("hook:beforeDestroy", () => {
-      clearInterval(timeNow);
-    });
+  },
+  beforeUnmount() {
+    clearInterval(this.timer);
+    this.timer = null;
   }
 };
 </script>

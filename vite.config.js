@@ -1,13 +1,13 @@
 import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 import Components from 'unplugin-vue-components/vite'
-import { ElementUiResolver } from 'unplugin-vue-components/resolvers'
-import vue2 from '@vitejs/plugin-vue2'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   base: "./",
   plugins: [
-    vue2({
+    vue({
       template: {
         compilerOptions: {
           preserveWhitespace: true,
@@ -17,7 +17,7 @@ export default defineConfig({
     }),
     Components({
       resolvers: [
-        ElementUiResolver({
+        ElementPlusResolver({
           importStyle: false
         }),
       ]

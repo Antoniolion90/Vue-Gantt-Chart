@@ -1,0 +1,31 @@
+.v-contextmenu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 120px;
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+.v-contextmenu-item {
+  line-height: 32px;
+  padding: 0 16px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.v-contextmenu-item:hover {
+  background: #f5f7fa;
+}
+
+.v-contextmenu-item.disabled {
+  color: #c0c4cc;
+  cursor: not-allowed;
+}
+
+.v-contextmenu-item.disabled:hover {
+  background: transparent;
+}

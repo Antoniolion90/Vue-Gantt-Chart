@@ -1,28 +1,24 @@
-import Vue from "vue";
+import { createApp } from "vue";
 import App from "./App.vue";
 import store from "./store";
+import bus from "@/utils/bus";
 
 import vGanttChart from "@/components/v-gantt/index";
+import contextMenu from "@/components/context-menu/index";
+import "@/components/context-menu/style.css";
 import "@/style/index.sass";
 
-import "element-ui/lib/theme-chalk/index.css";
-import loading from "element-ui/lib/loading";
-import Message from "element-ui/lib/message";
+import "element-plus/dist/index.css";
+import { ElLoading, ElMessage } from "element-plus";
 
-Vue.prototype.$ELEMENT = { size: "mini" };
+const app = createApp(App);
 
-Vue.use(loading.directive);
-Vue.prototype.$loading = loading.service;
-Vue.prototype.$message = Message;
-
-Vue.prototype.$bus = new Vue(); // 事件总线
-
-import contentMenu from "v-contextmenu/src/index.js"; //右键菜单组件
-import "v-contextmenu/dist/index.css";
-
-Vue.use(contentMenu);
-Vue.use(vGanttChart);
-new Vue({
-  store,
-  render: (h) => h(App)
-}).$mount("#app");
+app.config.globalProperties.$bus = bus;
+app.config.globalProperties.$loading = ElLoading.service;
+app.config.globalProperties.$message = ElMessage;
+app.provide("$bus", bus);
+app.use(ElLoading);
+app.use(store);
+app.use(contextMenu);
+app.use(vGanttChart);
+app.mount("#app");
