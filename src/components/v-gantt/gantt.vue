@@ -162,6 +162,8 @@
                           :key="blockData.id"
                           :blockData="blockData"
                           @dragover.prevent
+                          @dragstart="handleDragStart($event, rowData, blockData)"
+                          @drop.stop="handleDropOnBlock($event, rowData, blockData)"
                           @pointerdown.stop
                           @contextmenu.stop
                           @mousedown.left.stop="
@@ -612,6 +614,14 @@ export default {
       this.setCurrentRow(rowData);
       this.setCurrentBlock(blockItem);
     },
+    handleDragStart(event, rowData, blockItem) {
+      this.setCurrentRow(rowData);
+      this.setCurrentBlock(blockItem);
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", blockItem.id);
+      }
+    },
     handleRightClickBlock(event, rowData, blockItem) {
       this.setHandleRow(rowData);
       this.setHandleBlock(blockItem);
@@ -621,6 +631,11 @@ export default {
       this.setTargetBlock(null);
       this.setTargetRow(blockRow);
     },
+    handleDropOnBlock(event, rowData, blockItem) {
+      this.setTargetBlock(blockItem);
+      this.setTargetRow(rowData);
+      this.$bus.$emit("dragTask");
+    },
     moveCurrentBlock() {
       this.setCutBlock(this.handleBlock);
       this.setCutRow(this.handleRow);
@@ -629,6 +644,7 @@ export default {
     pasteBlock() {
       if (this.cutBlock) {
         this.setCurrentBlock(this.cutBlock);
+        this.setCurrentRow(this.cutRow);
         this.$bus.$emit("dragTask");
       }
     },

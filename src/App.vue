@@ -565,6 +565,7 @@ export default {
       });
       if (hasConflict) {
         this.$message.error("Task adjustment has time conflicts, please review!");
+        return;
       }
       let rowList = cloneDeep(this.showRowList);
       adjustList.forEach(adjustItem => {

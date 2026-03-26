@@ -77,6 +77,7 @@ export function checkConflict(blockItem, row, targetBlockItem) {
   let blockList = row.gtArray.filter((item) => {
     return (
       item.movedStatus !== "before" &&
+      item.id !== currentBlock.id &&
       (targetBlockItem ? item.id !== targetBlockItem.id : true)
     );
   }); // Task list for this stand, excluding black shadow items after drag

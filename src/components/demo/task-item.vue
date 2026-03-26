@@ -21,7 +21,7 @@
         movedStatusClass
         ]"
           @dblclick="changeZIndex"
-          @pointerdown.left="showDetailInfo"
+          @mousedown.left="showDetailInfo"
           @mouseleave="hideDetailInfo"
           @dragleave="hideDetailInfo"
         >
