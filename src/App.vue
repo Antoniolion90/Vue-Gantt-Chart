@@ -1,33 +1,35 @@
 <template>
   <div id="app">
     <div class="page-head">
-      <h2 class="sub-title">Draggable Gantt Chart</h2>
+      <h2 class="sub-title">Gantt Chart</h2>
       <div class="operation-box">
         <span class="form-title">Time:</span>
         <el-date-picker
+            :id="['start-time', 'end-time']"
             v-model="times"
             type="daterange"
             start-placeholder="Start date"
             end-placeholder="End date"
-            style="width: 220px"
+            class="time-picker"
         >
         </el-date-picker>
         <span class="form-title">Rows:</span>
         <el-input
             v-model.number="rowNum"
-            style="width:60px"
+            class="num-input"
         />
         <span class="form-title">Columns:</span>
         <el-input
             v-model.number="colNum"
-            style="width:60px"
+            class="num-input"
         />
-        <el-button type="primary" @click="initData">Generate data</el-button>
+        <el-button type="primary" @click="initData">Generate</el-button>
         <el-input
             v-model="searchValue"
             placeholder="ID"
+            aria-label="Search ID"
             clearable
-            style="width: 120px"
+            class="id-input"
             @clear="clearSearch"
         />
         <el-button type="primary" @click="filterSearchValue">Search
@@ -35,7 +37,7 @@
             {{ `${currentFindIndex + 1}/${findList.length}` }}
           </template>
         </el-button>
-        <el-button type="primary" @click="classifyDialogVisible=true">Data grouping</el-button>
+        <el-button type="primary" @click="classifyDialogVisible=true">Grouping</el-button>
       </div>
       <el-popover
           placement="right"
@@ -44,22 +46,22 @@
         <div class="gantt-config-options">
           <el-form :inline="true" size="small">
             <el-form-item label="Row height">
-              <el-slider
+              <el-input-number
                   v-model="cellHeight"
                   :min="20"
                   :max="100"
-                  style="width:80px"
+                  style="width:100px"
                   size="small"
-              ></el-slider>
+              ></el-input-number>
             </el-form-item>
             <el-form-item label="Scale width">
-              <el-slider
+              <el-input-number
                   v-model="cellWidth"
                   :min="20"
                   :max="100"
-                  style="width:80px"
+                  style="width:100px"
                   size="small"
-              ></el-slider>
+              ></el-input-number>
             </el-form-item>
             <el-form-item label="Minutes per scale">
               <el-select
@@ -93,7 +95,7 @@
 
         </div>
         <template #reference>
-          <el-button type="primary" style="margin-left: 10px;">Gantt settings</el-button>
+          <el-button type="primary" style="margin-left: 10px;">Settings</el-button>
         </template>
       </el-popover>
 

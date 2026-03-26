@@ -32,27 +32,62 @@ body
 .page-head
 	min-height: 60px
 	width: 100%
-	padding-top: 15px
+	padding: 10px 20px
 	flex-shrink: 0
 	display: flex
 	flex-direction: row
-	.el-input,.el-button
-		vertical-align: top
-		margin-left: 10px
+	flex-wrap: wrap
+	align-items: center
+	box-sizing: border-box
+	gap: 10px 15px
+
+	.operation-box
+		display: flex
+		flex-wrap: wrap
+		align-items: center
+		flex: 1
+		gap: 10px
+		
+		.el-input, .el-button, .el-date-editor, .form-title
+			margin: 0 // Reset previous margins
+
+		.time-picker
+			width: 180px
+		.num-input
+			width: 60px
+		.id-input
+			width: 120px
+
 	.sub-title
 		font-size: 16px
 		height: 28px
 		line-height: 28px
 		color: #A0A7B3
-		margin-right: 20px
-		margin-left: 20px
+		margin: 0
 		flex-shrink: 0
+
 	.head-btn-box
 		flex: 1
+
 	.form-title
 		font-size: 14px
 		color: #999
-		margin-left: 10px
+		margin: 0
+		white-space: nowrap
+
+	@media (max-width: 768px)
+		padding: 10px
+		.sub-title
+			width: 100%
+			margin-bottom: 10px
+		.operation-box
+			gap: 5px
+			.time-picker
+				width: 100%
+				max-width: 250px
+			.el-button
+				flex: 1
+				min-width: 120px
 		
 .page-body
 	overflow: hidden

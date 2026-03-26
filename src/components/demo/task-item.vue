@@ -10,7 +10,7 @@
         zIndex: zIndex
       }"
   >
-    <el-popover placement="bottom" trigger="manual" :open-delay="100" v-model:visible="showDetail">
+    <el-popover placement="bottom" :width="280" trigger="manual" :open-delay="100" v-model:visible="showDetail">
       <template #reference>
         <div
           :class="['plan',{
@@ -240,19 +240,31 @@ export default {
 .detail ul {
   list-style: none;
   padding: 0;
-  li {
-    span {
-      display: inline-block;
-      width: 80px;
-      color: #777777;
-      font-size: 0.8rem;
+    li {
+      display: flex;
+      margin-bottom: 5px;
+      span {
+        display: inline-block;
+        color: #777777;
+        font-size: 0.8rem;
+        vertical-align: top;
+      }
+      span:first-child {
+        width: 120px;
+        text-align: right;
+        padding-right: 8px;
+        box-sizing: border-box;
+        white-space: nowrap;
+      }
+      span:last-child {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #333;
+        text-align: left;
+      }
     }
-    span:first-child {
-      text-align: right;
-    }
-    span:last-child {
-    }
-  }
 }
 </style>
 
