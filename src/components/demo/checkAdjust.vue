@@ -16,28 +16,28 @@
         >
         </el-table-column>
         <el-table-column
-            :label="'已选('+ tableSelection.length+'/'+ adjustList.length+')'">
+            :label="'Selected ('+ tableSelection.length+'/'+ adjustList.length+')'">
           <template #default="scope">
             <el-tag :type="scope.row.conflictList.length===0?'success':'danger'" size="middle">
-              {{ scope.row.conflictList.length === 0 ? "无冲突" : "有冲突" }}
+              {{ scope.row.conflictList.length === 0 ? "No conflict" : "Has conflict" }}
             </el-tag>
             {{ scope.row.blockId }}
           </template>
         </el-table-column>
         <el-table-column
-            label="操作类型"
+            label="Action type"
             width="80"
             align="center">
           <template #default="scope">{{ scope.row.adjustType }}</template>
         </el-table-column>
         <el-table-column
-            label="目标"
+            label="Target"
             width="80"
             align="center">
           <template #default="scope">{{ scope.row.targetRowId }}</template>
         </el-table-column>
         <el-table-column
-            label="校验结果"
+            label="Validation result"
             width="80"
             align="center">
           <template #default="scope">{{ scope.row.conflictList.length }}</template>
@@ -46,9 +46,9 @@
     </div>
     <div class="right-check" v-if="selectRow">
       <div class="terms-info clearfix">
-        冲突列表({{ selectRow.conflictList.length }})
-        <el-button type="primary" class="conflict-btn" @click="ignoreConflictAll">全部忽略</el-button>
-        <el-button type="primary" class="conflict-btn" @click="checkAdjustResult">重新校验</el-button>
+        Conflict list({{ selectRow.conflictList.length }})
+        <el-button type="primary" class="conflict-btn" @click="ignoreConflictAll">Ignore all</el-button>
+        <el-button type="primary" class="conflict-btn" @click="checkAdjustResult">Revalidate</el-button>
       </div>
       <div class="terms-list">
         <el-scrollbar class="modify-scroll" style="height:100%">
@@ -57,7 +57,7 @@
             <p class="conflict-desc">{{ conflictItem.conflictDesc }}</p>
 
             <el-button :disabled="conflictItem.isIgnore" class="btn-ignore" type="primary"
-                       @click="ignoreConflictItem(conflictItem)">{{ conflictItem.isIgnore ? "已忽略" : "忽略" }}
+                       @click="ignoreConflictItem(conflictItem)">{{ conflictItem.isIgnore ? "Ignored" : "Ignore" }}
             </el-button>
           </div>
         </el-scrollbar>
@@ -66,9 +66,9 @@
 
       <div class="check-result-info clearfix">
         <el-tag :type="selectRow.conflictList.length===0?'success':'danger'" size="middle">
-          {{ selectRow.conflictList.length === 0 ? "校验通过" : "检验不通过" }}
+          {{ selectRow.conflictList.length === 0 ? "Validation passed" : "Validation failed" }}
         </el-tag>
-        <el-button type="primary" class="btn-check" @click="checkAndInsert">确定调整</el-button>
+        <el-button type="primary" class="btn-check" @click="checkAndInsert">Confirm adjustment</el-button>
 
 
       </div>
@@ -148,7 +148,7 @@ export default {
     },
     checkAdjustResult() {
       if (!this.tableSelection.length) {
-        this.$message.error("至少选择一项进行重新校验！");
+        this.$message.error("Select at least one item to revalidate!");
       } else {
         this.tableSelection.forEach(adjustObj => {
           let blockId = adjustObj.blockId;
@@ -158,7 +158,7 @@ export default {
               adjustIndex = rawIndex;
             }
           });
-          /*过滤忽略条件*/
+          /* Filter ignored conditions */
           adjustObj.conflictList = adjustObj.conflictList.filter(item => {
             return item.isIgnore === false;
           });
@@ -172,12 +172,12 @@ export default {
       if (!this.tableSelection.length) {
         return false;
       }
-      /*判断是否有冲突*/
+      /* Check whether conflicts exist */
       let hasConflict = this.tableSelection.some(adjustObj => {
         return adjustObj.conflictList.length > 0;
       });
       if (hasConflict) {
-        this.$message.error("调整任务存在时间冲突，请检查！");
+        this.$message.error("Task adjustment has time conflicts, please review!");
         return false;
       } else {
         let rowList = cloneDeep(this.showRowList);
@@ -189,10 +189,10 @@ export default {
               return blockItem.id === adjustItem.blockId;
             });
             if (movedBeforeBlock["movedStatus"] === "after") {
-              // 已经移动过一次的情况，过滤掉
+              // Filter out items that were already moved once
               currentRow.gtArray = currentRow.gtArray.filter(blockItem => blockItem.id !== adjustItem.blockId);
             } else {
-              // 没有移动过，修改movedStatus为before
+              // Not moved before, set movedStatus to before
               movedBeforeBlock["movedStatus"] = "before";
             }
           } else {
@@ -273,3 +273,5 @@ export default {
 }
 
 </style>
+
+

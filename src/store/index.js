@@ -2,19 +2,19 @@ import { createStore } from "vuex";
 
 export default createStore({
   state: {
-    filterBlockId: "", // 筛选的甘特块id
-    currentBlock: {}, //当前点击的甘特块
-    currentRow: {}, //当前点击的甘特行
-    cutBlock: {}, //剪切的甘特块
-    cutRow: {}, //剪切的甘特行
-    targetBlock: {}, //目标甘特块
-    targetRow: {}, //目标甘特行
-    handleBlock: {}, //右键操作的甘特块
-    handleRow: {}, //右键操作的甘特行
-    showRowList: [], // 筛选后在界面显示的列数据
-    rawRowList: [], // 列原始数据，用于恢复
-    showMovedBlock: true, // 是否显示拖拽之前的甘特状态
-    showDragConfirm: false // 调整任务时是否显示确认弹窗
+    filterBlockId: "", // Filtered gantt block ID
+    currentBlock: {}, //Currently selected gantt block
+    currentRow: {}, //Currently selected gantt row
+    cutBlock: {}, //Cut gantt block
+    cutRow: {}, //Cut gantt row
+    targetBlock: {}, //Target gantt block
+    targetRow: {}, //Target gantt row
+    handleBlock: {}, //Right-click action gantt block
+    handleRow: {}, //Right-click action gantt row
+    showRowList: [], // Displayed row data after filtering
+    rawRowList: [], // Original row data for reset
+    showMovedBlock: true, // Whether to show state before dragging
+    showDragConfirm: false // Whether to show confirmation dialog when adjusting tasks
   },
   mutations: {
     setFilterBlockId(state, str) {
@@ -58,3 +58,4 @@ export default createStore({
     }
   }
 });
+

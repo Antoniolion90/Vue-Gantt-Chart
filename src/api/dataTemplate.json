@@ -3,7 +3,7 @@
   "id": "JHR725ST",
   "type": "🚄",
   "speed": 88,
-  "name": "警官号",
+  "name": "Officer",
   "colorPair": {
     "dark": "rgb(247, 167, 71,0.8)",
     "light": "rgb(247, 167, 71,0.1)"
@@ -43,3 +43,4 @@
     }
   ]
 }
+

@@ -1,6 +1,6 @@
-// import dayjs from 'dayjs' //替换dayjs 兼容性会好一点，但是速度就很慢了，之前测了一下，大概快30倍？有点忘记了
+// import dayjs from 'dayjs' // dayjs is more compatible, but much slower (roughly 30x slower in earlier tests).
 
-//缓存 解析值，加速一点点吧
+// Cache parsed values for a small speedup
 
 const cacheParseTime = (function() {
   let cacheString = {};
@@ -9,7 +9,7 @@ const cacheParseTime = (function() {
 
   return function(timeName, timeString) {
     if (cacheString[timeName] !== timeString) {
-      // 避免缓存过多对象
+      // Avoid caching too many objects
       if (count++ > 10000) {
         cacheString = {};
         cacheValue = {};
@@ -22,11 +22,11 @@ const cacheParseTime = (function() {
   };
 })();
 
-// pStart 关于缓存这个值是因为getWidthAbout2Times和getPositionOffset通常是前后连续调用，start 值会再两个函数中分别用到一次
+// pStart is cached because getWidthAbout2Times and getPositionOffset are usually called in sequence and both use start once
 
 /**
- * 根据配置项计算两个时间的在gantt 图中的长度
- * 注：时间上start 早， end 晚
+ * Calculate the visual length between two times in gantt based on config
+ * Note: start should be earlier than end
  *
  * @export
  * @param {string} start
@@ -42,8 +42,8 @@ export function getWidthAbout2Times(start, end, arg) {
 }
 
 /**
- * 根据配置项计算 相对于 时间轴起始时间的距离 是 getWidthAbout2Times 的特化
- * 注：时间上，time 晚  beginTimeOfTimeLine 早
+ * Calculate distance from timeline start based on config; specialized version of getWidthAbout2Times
+ * Note: time should be later than beginTimeOfTimeLine
  *
  * @export
  * @param {string} time
@@ -65,7 +65,7 @@ function parseTime(time) {
   return new Date(time);
 }
 /**
- * 计算两个时间相差的分钟数
+ * Calculate minute difference between two times
  *
  * @param {string} start
  * @param {string} end
@@ -83,3 +83,4 @@ function diffTimeByMinutes(start, end) {
 // function diffTimeByMinutes(start,end){
 //   return end.diff(start, "m", true)
 // }
+

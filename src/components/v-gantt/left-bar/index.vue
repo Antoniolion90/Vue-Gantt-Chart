@@ -8,8 +8,8 @@
       }"
     >
       <div class="type-title">
-        <p>分组类型：</p>
-        <p>数量：{{ datas.length }}</p>
+        <p>Group type:</p>
+        <p>Count: {{ datas.length }}</p>
       </div>
       <div class="classify-tags">
         <template v-if="Object.keys(groupType).length">
@@ -22,7 +22,7 @@
         </template>
         <template v-else>
           <div class="classify-tag">
-            全部
+            All
           </div>
         </template>
       </div>
@@ -91,3 +91,4 @@ export default {
   }
 };
 </script>
+

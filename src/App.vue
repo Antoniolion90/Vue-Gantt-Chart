@@ -1,41 +1,41 @@
 <template>
   <div id="app">
     <div class="page-head">
-      <h2 class="sub-title">拖拽甘特图</h2>
+      <h2 class="sub-title">Draggable Gantt Chart</h2>
       <div class="operation-box">
-        <span class="form-title">时间:</span>
+        <span class="form-title">Time:</span>
         <el-date-picker
             v-model="times"
             type="daterange"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
+            start-placeholder="Start date"
+            end-placeholder="End date"
             style="width: 220px"
         >
         </el-date-picker>
-        <span class="form-title">行数:</span>
+        <span class="form-title">Rows:</span>
         <el-input
             v-model.number="rowNum"
             style="width:60px"
         />
-        <span class="form-title">列数:</span>
+        <span class="form-title">Columns:</span>
         <el-input
             v-model.number="colNum"
             style="width:60px"
         />
-        <el-button type="primary" @click="initData">生成数据</el-button>
+        <el-button type="primary" @click="initData">Generate data</el-button>
         <el-input
             v-model="searchValue"
-            placeholder="编号"
+            placeholder="ID"
             clearable
             style="width: 120px"
             @clear="clearSearch"
         />
-        <el-button type="primary" @click="filterSearchValue">搜索
+        <el-button type="primary" @click="filterSearchValue">Search
           <template v-if="findList.length">
             {{ `${currentFindIndex + 1}/${findList.length}` }}
           </template>
         </el-button>
-        <el-button type="primary" @click="classifyDialogVisible=true">数据分类</el-button>
+        <el-button type="primary" @click="classifyDialogVisible=true">Data grouping</el-button>
       </div>
       <el-popover
           placement="right"
@@ -43,7 +43,7 @@
           trigger="click">
         <div class="gantt-config-options">
           <el-form :inline="true" size="small">
-            <el-form-item label="行高">
+            <el-form-item label="Row height">
               <el-slider
                   v-model="cellHeight"
                   :min="20"
@@ -52,7 +52,7 @@
                   size="small"
               ></el-slider>
             </el-form-item>
-            <el-form-item label="单位刻度宽">
+            <el-form-item label="Scale width">
               <el-slider
                   v-model="cellWidth"
                   :min="20"
@@ -61,7 +61,7 @@
                   size="small"
               ></el-slider>
             </el-form-item>
-            <el-form-item label="每刻度时长">
+            <el-form-item label="Minutes per scale">
               <el-select
                   v-model="scale"
                   placeholder=""
@@ -78,22 +78,22 @@
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-checkbox v-model="hideHeader">隐藏头部</el-checkbox>
+              <el-checkbox v-model="hideHeader">Hide header</el-checkbox>
             </el-form-item>
             <el-form-item>
-              <el-checkbox :model-value="showMovedBlock" @change="setShowMovedBlock" title="是否显示拖拽之前的甘特块，若勾选，显示为黑色阴影状">
-                显示调整前任务
+              <el-checkbox :model-value="showMovedBlock" @change="setShowMovedBlock" title="Show the task state before dragging. If enabled, it is shown as a black shadow.">
+                Show pre-adjust task
               </el-checkbox>
             </el-form-item>
             <el-form-item>
-              <el-checkbox :model-value="showDragConfirm" @change="setShowDragConfirm" title="调整任务时是否显示确认弹窗">显示调整确认弹窗
+              <el-checkbox :model-value="showDragConfirm" @change="setShowDragConfirm" title="Show confirmation dialog when adjusting task">Show adjustment confirmation dialog
               </el-checkbox>
             </el-form-item>
           </el-form>
 
         </div>
         <template #reference>
-          <el-button type="primary" style="margin-left: 10px;">甘特配置项</el-button>
+          <el-button type="primary" style="margin-left: 10px;">Gantt settings</el-button>
         </template>
       </el-popover>
 
@@ -118,10 +118,10 @@
 
     </div>
     <el-dialog
-        title="数据分类"
+        title="Data grouping"
         v-model="classifyDialogVisible">
       <el-form class="classify-form">
-        <el-form-item label="类型：">
+        <el-form-item label="Type:">
           <el-checkbox-group v-model="selectRowTypes">
             <el-checkbox
                 v-for="(rowType,index) in rowTypes"
@@ -130,7 +130,7 @@
             </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
-        <el-form-item label="速度：">
+        <el-form-item label="Speed:">
           <el-checkbox-group v-model="selectSpeedTypes">
             <el-checkbox
                 v-for="(speed,index) in speedTypes"
@@ -141,12 +141,12 @@
         </el-form-item>
       </el-form>
       <div style="text-align: right;padding-top: 25px;">
-        <el-button @click="classifyDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="classifyData">确定</el-button>
+        <el-button @click="classifyDialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="classifyData">Confirm</el-button>
       </div>
     </el-dialog>
     <el-dialog
-        title="任务调整"
+        title="Task adjustment"
         v-model="checkDialogVisible"
         width="1000px">
 
@@ -329,16 +329,16 @@ export default {
       this.timeLines = [
         {
           time: timeA,
-          text: "自定义"
+          text: "Custom"
         },
         {
           time: timeB,
-          text: "测试",
+          text: "Test",
           color: "#747E80"
         }
       ];
     },
-    /* 数据分组*/
+    /* Data grouping */
     classifyData() {
 
       function combine(arr) {
@@ -355,8 +355,8 @@ export default {
       let typeList = this.selectRowTypes.length ? this.selectRowTypes : [""];
       let speedList = this.selectSpeedTypes.length ? this.selectSpeedTypes : [""];
       /*
-      混和类型和速度属性
-      例：选中两个类型和两个速度，["🚅", "🚈"]和["0~50", "50~100"]  最终会生成四种混合类型的数组，如果都选中三个，最终结果则是9个
+      Mix type and speed attributes
+      Example: select 2 types and 2 speed ranges, ["🚅", "🚈"] and ["0~50", "50~100"]. This generates 4 mixed groups. If both selections have 3 options, the result is 9 groups.
      [
         [
           "0~50",
@@ -381,7 +381,7 @@ export default {
       let resultArr = combine([typeList, speedList]);
       let classifyList = [];
       resultArr.forEach(resultItem => {
-        //新建空对象，依次赋值, 建立最终类型数组
+        // Create an empty object and assign values to build the final grouped list
         let tempObj = {};
         if (resultItem[0]) {
           tempObj["speed"] = resultItem[0];
@@ -392,7 +392,7 @@ export default {
         if (Object.getOwnPropertyNames(tempObj).length) {
           classifyList.push(tempObj);
         }
-        /*将数组转为对象，最终是4个这样的对象
+        /* Convert arrays to objects; the final result contains 4 objects like this
           [
             {
               "speed": "0~50",
@@ -426,7 +426,7 @@ export default {
       }
       let groupList = [];
 
-      /* 遍历每一个类型对象，并筛选对应的行，添加到每一个甘特组的children里*/
+      /* Iterate each type object, filter matching rows, and append them to each gantt group children */
       classifyList.forEach(classifyItem => {
         let tempObj = Object.assign({}, classifyItem);
         tempObj["children"] = [];
@@ -445,7 +445,7 @@ export default {
           });
         }
         blockRowList.forEach((item, index) => {
-          // 遍历每一行生成一个rawIndex属性，这个属性用来计算每一行的top值
+          // Add rawIndex for each row; used to calculate each row top position
           item.rawIndex = index;
         });
         tempObj["children"] = blockRowList;
@@ -456,14 +456,14 @@ export default {
       this.datas = groupList;
       this.classifyDialogVisible = false;
     },
-    /* 查找*/
+    /* Search */
     filterSearchValue() {
       if (!this.searchValue) {
-        this.$message.warning('编号不能为空~');
+        this.$message.warning('ID cannot be empty~');
         return false;
       }
       let findList = this.findList.length ? this.findList : [];
-      /* 如果有之前查到的列表 */
+      /* If previous search results exist */
       if (findList.length) {
         this.currentFindIndex += 1;
         if (this.currentFindIndex >= findList.length) this.currentFindIndex = 0;
@@ -487,7 +487,7 @@ export default {
 
 
         let findRow = blockRowList.filter(row => {
-          let blockItemIds = row.gtArray.map(blockItem => blockItem.id).join("~"); // 将一行所有blockItem的id拼成一个长字符串
+          let blockItemIds = row.gtArray.map(blockItem => blockItem.id).join("~"); // Join all block item IDs in one row into a long string
           return blockItemIds.includes(this.searchValue);
         });
         let scrollTop = 0;
@@ -518,12 +518,12 @@ export default {
 
                 findList.push(newBlockItem);
 
-                // 计算需要滚动的高度和宽度
+                // Calculate height and width required for scrolling
               });
             }
           }
         } else {
-          this.$message.warning('没有搜到结果~');
+          this.$message.warning('No results found~');
           return false;
         }
         preScrollHeight += (blockRowList.length + 1) * this.cellHeight;
@@ -564,12 +564,12 @@ export default {
         adjustList.push(adjustOjb);
       }
 
-      // 判断是否有冲突
+      // Check whether conflicts exist
       let hasConflict = adjustList.some(adjustObj => {
         return adjustObj.conflictList.length > 0;
       });
       if (hasConflict) {
-        this.$message.error("调整任务存在时间冲突，请检查！");
+        this.$message.error("Task adjustment has time conflicts, please review!");
       }
       let rowList = cloneDeep(this.showRowList);
       adjustList.forEach(adjustItem => {
@@ -580,10 +580,10 @@ export default {
             return blockItem.id === adjustItem.blockId;
           });
           if (movedBeforeBlock["movedStatus"] === "after") {
-            // 已经移动过一次的情况，过滤掉
+            // Filter out items that were already moved once
             currentRow.gtArray = currentRow.gtArray.filter(blockItem => blockItem.id !== adjustItem.blockId);
           } else {
-            // 没有移动过，修改movedStatus为before
+            // Not moved before, set movedStatus to before
             movedBeforeBlock["movedStatus"] = "before";
           }
         } else {
@@ -606,3 +606,5 @@ export default {
   }
 };
 </script>
+
+

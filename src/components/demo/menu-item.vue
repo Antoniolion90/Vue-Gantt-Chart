@@ -19,7 +19,7 @@ export default {
     ...mapState([
       'filterBlockId',
     ]),
-    /*筛选class*/
+    /* Filter class */
     matchClass() {
       let filterClass = '';
       if (this.rowData.gtArray.length) {
@@ -65,3 +65,4 @@ export default {
   font-size: 1.2rem;
 }
 </style>
+

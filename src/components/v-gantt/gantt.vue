@@ -2,15 +2,15 @@
   <div class="gantt-chart">
     <v-contextmenu ref="blockItemMenu">
       <v-contextmenu-item class="right-menu-item" @click="moveCurrentBlock"
-      >复制
+      >Copy
       </v-contextmenu-item>
       <v-contextmenu-item class="right-menu-item" @click="switchBlock"
-      >交换
+      >Swap
       </v-contextmenu-item>
     </v-contextmenu>
     <v-contextmenu ref="blockRowMenu">
       <v-contextmenu-item class="right-menu-item" @click="pasteBlock"
-      >粘贴
+      >Paste
       </v-contextmenu-item>
     </v-contextmenu>
     <div
@@ -227,7 +227,7 @@ export default {
       default: () => dayjs(),
       validator(date) {
         const ok = dayjs(date).isValid();
-        if (!ok) warn(`非法的开始时间 ${date}`);
+        if (!ok) warn(`Invalid start time ${date}`);
         return ok;
       }
     },
@@ -235,7 +235,7 @@ export default {
       default: () => dayjs(),
       validator(date) {
         const ok = dayjs(date).isValid();
-        if (!ok) warn(`非法的结束时间 ${date}`);
+        if (!ok) warn(`Invalid end time ${date}`);
         return ok;
       }
     },
@@ -305,7 +305,7 @@ export default {
 
   data() {
     return {
-      //缓存节点
+      // Cache nodes
       selector: {
         gantt_leftbar: {},
         gantt_table: {},
@@ -314,8 +314,8 @@ export default {
       },
       scrollTop: 0,
       scrollLeft: 0,
-      //block 区域需要渲染的范围
-      //先渲染出空框架，在mounted后再得到真实的渲染范围，然后在根据范围渲染数据，比之前设置一个默认高度宽度，额外的渲染浪费更少了
+      // Render range required for block area
+      // Render an empty frame first, then compute real render range after mounted and render by range to reduce wasted extra rendering
       heightOfBlocksWrapper: 0,
       widthOfBlocksWrapper: 0,
       currentDay: dayjs(),
@@ -356,7 +356,7 @@ export default {
       } = this;
       let end = dayjs(this.endTime);
       const totalWidth = calcScalesAbout2Times(start, end, scale) * cellWidth;
-      // 时间纠正和补偿
+      // Time correction and compensation
       if (
           timeRangeCorrection &&
           (start.isAfter(end) || totalWidth <= widthOfBlocksWrapper)
@@ -395,7 +395,7 @@ export default {
       return window.innerHeight - this.heightOfBlocksWrapper;
     },
     availableScrollLeft() {
-      // 不减这个1，滚动到时间轴尽头后继续滚动会慢慢的溢出
+      // Without subtracting this 1, scrolling past timeline end gradually overflows
       const {totalWidth, widthOfBlocksWrapper} = this;
       return totalWidth - widthOfBlocksWrapper - 1;
     },
@@ -450,7 +450,7 @@ export default {
 
   mounted() {
     this.cacheSelector();
-    // 计算准确的渲染区域范围
+    // Calculate accurate render area range
     const observeContainer = throttle((entries) => {
       entries.forEach((entry) => {
         const cr = entry.contentRect;
@@ -536,7 +536,7 @@ export default {
       this.selector.gantt_markArea.style.left = this.scroller.x + "px";
       this.scrollLeft = -this.scroller.x;
       this.scrollTop = -this.scroller.y;
-      /*计算滚动位置的时间*/
+      /* Calculate time from scroll position */
 
       let width = this.scroller.x;
 
@@ -547,7 +547,7 @@ export default {
       this.currentDay = dayjs(scrollTime);
 
     },
-    /*向前滚动一天*/
+    /* Scroll forward by one day */
     scrollPreDay() {
       let tempDay = this.currentDay;
 
@@ -567,7 +567,7 @@ export default {
         }
       }
     },
-    /*向后滚动一天*/
+    /* Scroll backward by one day */
     scrollNextDay() {
       let tempDay = this.currentDay;
 
@@ -594,7 +594,7 @@ export default {
       return _getWidthAbout2Times(start, end, options);
     },
     /**
-     * 为时间线计算偏移
+     * Calculate offset for timeline
      */
     getPositionOffset(date) {
       const options = {
@@ -608,7 +608,7 @@ export default {
           options
       );
     },
-    //缓存节点
+    // Cache nodes
     cacheSelector() {
       this.selector.gantt_leftbar = this.$refs.leftbarWrapper;
       this.selector.gantt_table = this.$refs.blocksWrapper;
@@ -638,14 +638,14 @@ export default {
       this.setCutBlock(this.handleBlock);
       this.setCutRow(this.handleRow);
     },
-    /*粘贴*/
+    /*Paste*/
     pasteBlock() {
       if (this.cutBlock) {
         this.setCurrentBlock(this.cutBlock);
         this.$bus.$emit("dragTask");
       }
     },
-    /*交换*/
+    /*Swap*/
     switchBlock() {
       if (this.cutBlock && this.currentBlock) {
         this.setCurrentBlock(this.cutBlock);
@@ -669,3 +669,4 @@ export default {
 <style lang="scss">
 @import "gantt";
 </style>
+

@@ -126,8 +126,8 @@ export default {
       return isDayScale(scale);
     },
     /**
-     * 天列表
-     * @returns {[dayjs]} 该data中所有需要渲染的数据
+     * Day list
+     * @returns {[dayjs]} All data entries that need rendering in this data set
      */
     allDayBlocks() {
       const temp = [];
@@ -168,10 +168,10 @@ export default {
       } else return !!isSameOrBetween(startDayOfRenderArea, endDayOfRenderArea, day);
     },
     /**
-     * 获取时间刻度数组
+     * Get time scale array
      *
      * @param {dayjs} date
-     * @returns {[string]} 该data中所有需要渲染的数据
+     * @returns {[string]} All data entries that need rendering in this data set
      */
     getTimeScales(date) {
       const { start, end } = this;
@@ -185,35 +185,35 @@ export default {
       }
     },
     /**
-     * 生成时间刻度数组
+     * Generate time scale array
      *
      * @param {Symbol} type
-     * @returns {[string]} 该data中所有需要渲染的数据
+     * @returns {[string]} All data entries that need rendering in this data set
      */
     generateTimeScale(type) {
       const totalblock = [];
       const { start, end, scale } = this;
       let a, b;
       switch (type) {
-        case START_DAY: //和start同一天
+        case START_DAY: //same day as start
           a = getBeginTimeOfTimeLine(start, scale);
-          //start和end同一天特殊处理
+          //special case when start and end are on same day
           if (isSameDay(start, end)) {
             b = end;
           } else {
             b = start.endOf("day");
           }
           break;
-        case END_DAY: //和end 同一天
+        case END_DAY: //same day as end
           a = end.startOf("day");
           b = end;
           break;
-        case MIDDLE_DAY: //start和end中间的天
+        case MIDDLE_DAY: //days between start and end
           a = start.startOf("day");
           b = start.endOf("day");
           break;
         default:
-          throw new TypeError("错误的计算类型");
+          throw new TypeError("Invalid calculation type");
       }
       while (!a.isAfter(b)) {
         totalblock.push(a);
@@ -225,3 +225,4 @@ export default {
   }
 };
 </script>
+

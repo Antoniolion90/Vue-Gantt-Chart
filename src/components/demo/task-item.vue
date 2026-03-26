@@ -29,24 +29,24 @@
             <span>S:{{ startToString }}</span>
             <span>E:{{ endToString }}</span>
           </div>
-          <div class="middle">编号{{ blockData.id }}</div>
-          <div class="passenger">{{blockData.passenger}}人</div>
+          <div class="middle">ID{{ blockData.id }}</div>
+          <div class="passenger">{{blockData.passenger}} pax</div>
         </div>
       </template>
 
       <div class="detail">
         <ul>
           <li>
-            <span>发车时间：</span><span>{{ startToString }}</span>
+            <span>Departure time: </span><span>{{ startToString }}</span>
           </li>
           <li>
-            <span>到站时间：</span><span>{{ endToString }}</span>
+            <span>Arrival time: </span><span>{{ endToString }}</span>
           </li>
           <li>
-            <span>载员：</span><span>{{ blockData.passenger }}</span>
+            <span>Passenger count: </span><span>{{ blockData.passenger }}</span>
           </li>
           <li>
-            <span>编号：</span><span>{{ blockData.id }}</span>
+            <span>ID：</span><span>{{ blockData.id }}</span>
           </li>
         </ul>
       </div>
@@ -87,7 +87,7 @@ export default {
       "cutBlock",
     ]),
     canDrag() {
-      // 是否可拖拽 已经移动过的不可拖拽，正在进行或已经完成的不可拖拽
+      // Draggable only if not moved yet and not in progress/completed
       let { blockData, currentTime } = this
       let start = dayjs(blockData.start)
       return start.isAfter(currentTime) && this.blockData.movedStatus !== "before"
@@ -231,7 +231,7 @@ export default {
   -webkit-user-select: none; /* Chrome/Safari/Opera */
   -moz-user-select: none; /* Firefox */
   -ms-user-select: none; /* Internet Explorer/Edge */
-  user-select: none; /* Non-prefixed version, currently 禁止鼠标拖动时 */
+  user-select: none; /* Non-prefixed version, currently disable mouse dragging */
   .header {
     text-align: center;
     font-size: 1rem;
@@ -255,3 +255,4 @@ export default {
   }
 }
 </style>
+

@@ -20,8 +20,8 @@ const dynamicRender = {
       type: Array,
       required: true
     },
-    // 为 0 时加载全部行,
-    //预加载的数量,是前后都计算
+    // Load all rows when set to 0
+    // Preload count applies to both before and after
     preload: {
       type: Number,
       default: 1
@@ -35,7 +35,7 @@ const dynamicRender = {
 
   data() {
     return {
-      //上一次加载的第一个节点
+      // First node loaded in previous render
       wrapperElement: null,
       oldTopIndex: 0,
       startRenderNum: 0,
@@ -48,7 +48,7 @@ const dynamicRender = {
   },
 
   computed: {
-    //计算当前屏幕显示的第一行数据的index
+    // Calculate index of first visible row
     showDatas() {
       const { startRenderNum, endRenderNum, datas } = this;
       return datas.slice(startRenderNum, endRenderNum);
@@ -87,7 +87,7 @@ const dynamicRender = {
 
   methods: {
     /**
-     * 分割出dom中需要显示的数据
+     * Split out data that should be shown in DOM
      */
     sliceData() {
       if (!this.wrapperElement) return false;
@@ -130,14 +130,14 @@ const dynamicRender = {
         return;
       }
 
-      //没有高度，不需要渲染元素
+      // No height means no need to render elements
       if (heightOfBlocksWrapper === 0 || cellHeight === 0) {
         this.startRenderNum = 0;
         this.endRenderNum = 0;
         return;
       }
 
-      // 为 0 全部渲染
+      // Render all when set to 0
       if (preload === 0) {
         this.startRenderNum = 0;
         this.endRenderNum = datas.length;
@@ -154,3 +154,4 @@ const dynamicRender = {
 };
 
 export default dynamicRender;
+

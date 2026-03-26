@@ -62,7 +62,7 @@ export default {
       });
     },
     /**
-     * 判定时间段是否跨越了渲染的时间范围 或者判定时间是否在渲染的时间范围内
+     * Determine whether a time range crosses the render window, or whether a time point is inside it
      *
      * @returns {boolean}
      * @param timeStart
@@ -84,3 +84,4 @@ export default {
   }
 };
 </script>
+

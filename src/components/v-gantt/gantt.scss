@@ -92,7 +92,7 @@ $font-gray:#666;
       }
     }
 
-    // 隐藏第一个时间节点，不然会只显示一半，不好看
+    // Hide the first time cell, otherwise only half is visible
     &-block:first-child &-scale div:first-child {
       visibility: hidden;
     }
@@ -211,7 +211,7 @@ $font-gray:#666;
       -webkit-user-select: none; /* Chrome/Safari/Opera */
       -moz-user-select: none; /* Firefox */
       -ms-user-select: none; /* Internet Explorer/Edge */
-      user-select: none; /* Non-prefixed version, currently 禁止鼠标拖动时 */
+      user-select: none; /* Non-prefixed version, currently disable mouse dragging */
     }
   }
 
@@ -244,3 +244,4 @@ $font-gray:#666;
     }
   }
 }
+
