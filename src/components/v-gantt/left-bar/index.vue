@@ -26,13 +26,15 @@
           </div>
         </template>
       </div>
-      <div
-        :class="[
-          'btn-toggle',
-          isOpen ? 'el-icon-arrow-down' : 'el-icon-arrow-right'
-        ]"
+      <button
+        type="button"
+        class="btn-toggle"
+        :aria-expanded="isOpen"
+        :aria-label="isOpen ? 'Collapse group' : 'Expand group'"
         @click="toggleOpen(groupIndex)"
-      />
+      >
+        {{ isOpen ? "▼" : "▶" }}
+      </button>
     </div>
     <div
       v-show="isOpen"
@@ -73,7 +75,7 @@ export default {
     },
     groupType: {
       type: Object,
-      default: () => {}
+      default: () => ({})
     },
     groupIndex: {
       type: Number,

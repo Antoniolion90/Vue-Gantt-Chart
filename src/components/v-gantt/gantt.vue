@@ -489,7 +489,13 @@ export default {
     });
     this.scroller.on("scroll", throttle(this.scrollHandler));
     this.onScrollToPosition = (position) => {
-      this.scroller?.scrollTo(position.x, position.y, 600);
+      const scroller = this.scroller;
+      if (!scroller) return;
+      // Content may have changed (e.g. groups opened), so update the scroll range first
+      scroller.refresh();
+      const x = Math.min(0, Math.max(scroller.maxScrollX, position.x));
+      const y = Math.min(0, Math.max(scroller.maxScrollY, position.y));
+      scroller.scrollTo(x, y, 600);
     };
     this.onRefresh = () => {
       this.scroller?.refresh();

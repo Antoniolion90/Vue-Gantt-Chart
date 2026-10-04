@@ -6,7 +6,8 @@
         <span class="form-title">Time:</span>
         <el-date-picker
             :id="['start-time', 'end-time']"
-            v-model="times"
+            v-model="timeRange"
+            :clearable="false"
             type="daterange"
             start-placeholder="Start date"
             end-placeholder="End date"
@@ -163,9 +164,7 @@ import dayjs from "dayjs";
 import {debounce, buildAdjustList, applyAdjustList} from "@/utils/tool.js";
 import {mapMutations, mapState} from "vuex";
 import checkAdjust from "./components/demo/checkAdjust.vue";
-import {
-  getWidthAbout2Times as _getWidthAbout2Times
-} from "@/utils/gtUtils.js";
+import {normalizeDateRange, findBlocks, getTimeOffset} from "@/utils/demoUtils.js";
 import {mockDatas} from "@/api/mock-data";
 
 const scaleList = `1,2,3,4,5,6,10,12,15,20,30,60,120,180,240,360,720,1440,2880,4320`
@@ -212,17 +211,7 @@ export default {
       titleHeight: 60,
       titleWidth: 250,
       scale: 60,
-      times: [
-        dayjs()
-            .set("hour", 0)
-            .set("minute", 0)
-            .toString(),
-        dayjs()
-            .add(6, "day")
-            .set("hour", 23)
-            .set("minute", 59)
-            .toString()
-      ],
+      times: normalizeDateRange([dayjs(), dayjs().add(6, "day")]),
       rowNum: 500,
       colNum: 25,
       datas: [[]],
@@ -244,6 +233,11 @@ export default {
     showRowList() {
       this.classifyData();
     },
+    searchValue() {
+      // A new query starts from the first match
+      this.currentFindIndex = 0;
+      this.findList = [];
+    },
     cellWidth: debounce(function() {
       this.$bus.$emit("refresh");
     }, 300),
@@ -262,7 +256,16 @@ export default {
       "rawRowList",
       "showMovedBlock",
       "showDragConfirm"
-    ])
+    ]),
+    timeRange: {
+      get() {
+        return this.times;
+      },
+      set(range) {
+        const times = normalizeDateRange(range);
+        if (times) this.times = times;
+      }
+    }
   },
   mounted() {
     this.initData();
@@ -302,12 +305,11 @@ export default {
       "setShowMovedBlock",
       "setShowDragConfirm"
     ]),
-    getWidthAbout2Times(start, end) {
-      const options = {
+    getTimeOffset(time) {
+      return getTimeOffset(time, this.times[0], {
         scale: this.scale,
         cellWidth: this.cellWidth
-      };
-      return _getWidthAbout2Times(start, end, options);
+      });
     },
     initData() {
       this.dataSeed = Date.now();
@@ -440,84 +442,36 @@ export default {
       });
       this.datas = groupList;
     },
-    /* Search */
-    filterSearchValue() {
+    /* Search: the first press jumps to the first match, next presses go to the next one */
+    async filterSearchValue() {
       if (!this.searchValue) {
         this.$message.warning('ID cannot be empty~');
         return false;
       }
-      let findList = this.findList.length ? this.findList : [];
-      /* If previous search results exist */
-      if (findList.length) {
-        this.currentFindIndex += 1;
-        if (this.currentFindIndex >= findList.length) this.currentFindIndex = 0;
-        for (let i = this.currentFindIndex, len = findList.length; i < len; i++) {
-          let blockItem = findList[i];
-          this.$bus.$emit("scrollToPosition", {
-            x: -blockItem.x,
-            y: -blockItem.y
-          });
-          break;
-        }
+      // Positions are recalculated on every press, since groups may be toggled or data changed
+      const {matches, groupIndexes} = findBlocks(this.datas, this.searchValue, this.cellHeight);
+      if (!matches.length) {
+        this.$message.warning('No results found~');
+        this.findList = [];
+        this.currentFindIndex = 0;
         return false;
       }
-      let preScrollHeight = 0;
-
-      for (let i = 0, len = this.datas.length; i < len; i++) {
-
-        let ganttGroup = this.datas[i];
-        ganttGroup.isOpen = true;
-        let blockRowList = ganttGroup.children;
-
-
-        let findRow = blockRowList.filter(row => {
-          let blockItemIds = row.gtArray.map(blockItem => blockItem.id).join("~"); // Join all block item IDs in one row into a long string
-          return blockItemIds.includes(this.searchValue);
-        });
-        let scrollTop = 0;
-        if (findRow.length) {
-
-          for (let j = 0, len = findRow.length; j < len; j++) {
-            let rowItem = findRow[j];
-            scrollTop = (rowItem.rawIndex + 1) * this.cellHeight;
-
-            let filterBlockList = rowItem.gtArray.filter(blockItem => {
-              return blockItem.id.includes(this.searchValue);
-            });
-            if (filterBlockList.length) {
-              filterBlockList.forEach(blockItem => {
-                const containerWidth = window.innerWidth - this.titleWidth;
-
-                let totalTimeWidth = this.getWidthAbout2Times(this.times[0], this.times[1]);
-
-                let calcLeft = this.getWidthAbout2Times(this.times[0], blockItem.start); //
-
-                let scrollLeft = calcLeft > totalTimeWidth - containerWidth ? totalTimeWidth - containerWidth : calcLeft;
-
-                let newBlockItem = {
-                  x: scrollLeft,
-                  y: scrollTop + preScrollHeight,
-                  ...blockItem
-                };
-
-                findList.push(newBlockItem);
-
-                // Calculate height and width required for scrolling
-              });
-            }
-          }
-        } else {
-          this.$message.warning('No results found~');
-          return false;
-        }
-        preScrollHeight += (blockRowList.length + 1) * this.cellHeight;
-      }
-      this.findList = findList;
-      this.$bus.$emit("scrollToPosition", {
-        x: -findList[0].x,
-        y: -findList[0].y
+      this.currentFindIndex = this.findList.length
+          ? (this.currentFindIndex + 1) % matches.length
+          : 0;
+      this.findList = matches;
+      groupIndexes.forEach(index => {
+        this.datas[index].isOpen = true;
       });
       this.setFilterBlockId(this.searchValue);
+
+      // Wait until opened groups are rendered, so the scroll range is up to date
+      await this.$nextTick();
+      const {block, y} = matches[this.currentFindIndex];
+      this.$bus.$emit("scrollToPosition", {
+        x: -this.getTimeOffset(block.start),
+        y: -y
+      });
     },
     clearSearch() {
       this.setFilterBlockId('');

@@ -5,7 +5,7 @@ const colorList = [
   "(247, 167, 71)",
   "(116, 202, 90)",
   "(83, 186, 241)",
-  "(208, 142, 2231)"
+  "(208, 142, 231)"
 ];
 const nameList = "Hope,SwiftWing,Lightbringer,Scout,PowerGod,Officer,LightningMeteor,Doctor,ThunderFireGod,Sniper,LightOfHope,SouthSeaNinja,RapidE3,MountainGod,SafetyGuard,Hammer,Longevity,Star,Romanska,Desire,ThunderLightning,FireRescue,EuroStar".split(
   ","
