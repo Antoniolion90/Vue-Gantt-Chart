@@ -5,7 +5,10 @@ import {
   findRowOfBlock,
   getState,
   loadRows,
-  openGantt
+  openGantt,
+  chartCenter,
+  scrollChart,
+  setViewOptions
 } from "./helpers.js";
 
 // The page clock starts at 06:00. S has started, A, B, C, D are in the future.
@@ -87,6 +90,8 @@ test.describe("rendering", () => {
     const detail = page.locator(".detail").filter({ visible: true });
     await expect(detail).toContainText("Departure time");
     await expect(detail).toContainText(id);
+    // Times include the date
+    await expect(detail).toContainText(/[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}/);
 
     await page.mouse.move(5, 5);
     await expect(detail).toHaveCount(0);
@@ -214,5 +219,104 @@ test.describe("demo controls", () => {
     await expect
       .poll(async () => new Date((await getState(page)).firstBlockStart).getMonth())
       .toBe((before.getMonth() + 1) % 12);
+  });
+});
+
+test.describe("view settings", () => {
+  test("block text stays inside blocks on a large scale", async ({ page }) => {
+    await setViewOptions(page, { scaleLabel: "6hour" });
+    const outside = await page.evaluate(() => {
+      const result = [];
+      for (const plan of document.querySelectorAll(".gantt-block-item .plan")) {
+        const box = plan.getBoundingClientRect();
+        for (const child of plan.children) {
+          const rect = child.getBoundingClientRect();
+          if (rect.left < box.left - 1 || rect.right > box.right + 1) {
+            result.push(plan.parentElement.dataset.blockId);
+            break;
+          }
+        }
+      }
+      return result;
+    });
+    expect(outside).toEqual([]);
+  });
+
+  test("labels of close time lines do not overlap", async ({ page }) => {
+    await setViewOptions(page, { scaleLabel: "6hour" });
+    const overlaps = await page.evaluate(() => {
+      const rects = [...document.querySelectorAll(".gantt-markline-label")].map((el) =>
+        el.getBoundingClientRect()
+      );
+      let count = 0;
+      for (let i = 0; i < rects.length; i++) {
+        for (let j = i + 1; j < rects.length; j++) {
+          const a = rects[i];
+          const b = rects[j];
+          if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) count++;
+        }
+      }
+      return { count, labels: rects.length };
+    });
+    expect(overlaps.labels).toBe(3);
+    expect(overlaps.count).toBe(0);
+  });
+
+  test("zooming keeps the time in the middle of the viewport", async ({ page }) => {
+    await scrollChart(page, 1500, 2000);
+    const center = await chartCenter(page);
+    // A block under the vertical center line, in any row
+    const blockId = await page.evaluate(({ x }) => {
+      const el = [...document.querySelectorAll("[data-block-id]")].find((block) => {
+        const rect = block.getBoundingClientRect();
+        return rect.left < x - 2 && rect.right > x + 2 && rect.top > 130;
+      });
+      return el?.dataset.blockId;
+    }, center);
+    expect(blockId).toBeTruthy();
+
+    await setViewOptions(page, { scaleLabel: "30minute" });
+    const rect = await page.locator(`[data-block-id="${blockId}"]`).boundingBox();
+    expect(rect.x).toBeLessThan(center.x + 2);
+    expect(rect.x + rect.width).toBeGreaterThan(center.x - 2);
+  });
+
+  test("changing the row height keeps the row in the middle of the viewport", async ({ page }) => {
+    await scrollChart(page, 0, 6000);
+    const center = await chartCenter(page);
+    const rowAt = (y) =>
+      page.evaluate((py) => {
+        const row = [...document.querySelectorAll(".gantt-block-row")].find((el) => {
+          const rect = el.getBoundingClientRect();
+          return rect.top <= py && rect.bottom > py;
+        });
+        return row?.dataset.rowId;
+      }, y);
+    const before = await rowAt(center.y);
+    expect(before).toBeTruthy();
+
+    await setViewOptions(page, { rowHeight: 80 });
+    expect(await rowAt(center.y)).toBe(before);
+  });
+
+  test("header date follows the date range and the day buttons", async ({ page }) => {
+    await page.locator(".time-picker").click();
+    const panel = page.locator(".el-date-range-picker").filter({ visible: true });
+    const rightCells = panel.locator(".el-date-range-picker__content.is-right td.available");
+    await rightCells.nth(0).click();
+    await rightCells.nth(4).click();
+    await expect(panel).toBeHidden();
+
+    const start = new Date((await getState(page)).firstBlockStart);
+    const label = (date) =>
+      `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const firstDay = new Date(start.getFullYear(), start.getMonth(), 1);
+    const currentDate = page.locator(".current-date");
+    await expect(currentDate).toHaveText(label(firstDay));
+
+    await page.getByRole("button", { name: "Next day" }).click();
+    await expect(currentDate).toHaveText(label(new Date(firstDay.getTime() + 24 * 3600 * 1000)));
+    await page.getByRole("button", { name: "Previous day" }).click();
+    await expect(currentDate).toHaveText(label(firstDay));
   });
 });

@@ -27,29 +27,6 @@ export function warn(str) {
 
 export function noop() {}
 
-export function debounce(fn, interval = 500, immediate = false) {
-  // fn is the function to execute
-  // interval is the waiting time
-  // immediate decides whether to execute immediately
-  var timeout; // timer
-
-  return function() {
-    // Return a closure
-    var context = this,
-      args = arguments; // Cache variables first
-    var later = function() {
-      // Wrap logic to run later
-      timeout = null; // Clear timer after successful call
-      if (!immediate) fn.apply(context, args); // Call only when not immediate
-    };
-
-    var callNow = immediate && !timeout; // Determine immediate call; if timer exists, do not call now
-    clearTimeout(timeout); // Always clear timer first for stability
-    timeout = setTimeout(later, interval); // Delayed execution
-    if (callNow) fn.apply(context, args); // If first trigger and immediate is true, execute now
-  };
-}
-
 // Runs fn at most once per animation frame with the latest arguments
 export function throttle(fn) {
   let timer = null;

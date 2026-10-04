@@ -84,3 +84,27 @@ function diffTimeByMinutes(start, end) {
 //   return end.diff(start, "m", true)
 // }
 
+
+/**
+ * Stack overlapping labels: each label gets the lowest level where it does not overlap
+ * a label placed before it. Labels start at x and extend to the right.
+ *
+ * @export
+ * @param {Array<{x:number,width:number}>} labels
+ * @returns {number[]} level of each label, in the input order
+ */
+export function assignLabelLevels(labels) {
+  const levels = new Array(labels.length);
+  // Right edge of the last label on each level
+  const levelEnds = [];
+  labels
+    .map((label, index) => ({ ...label, index }))
+    .sort((a, b) => a.x - b.x)
+    .forEach(({ x, width, index }) => {
+      let level = levelEnds.findIndex((end) => end <= x);
+      if (level === -1) level = levelEnds.length;
+      levelEnds[level] = x + width;
+      levels[index] = level;
+    });
+  return levels;
+}

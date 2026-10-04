@@ -2,6 +2,7 @@
   <mark-line
     :timeConfig="{ time: currentTime, color: 'rgba(255,0,0,.4)' }"
     :getPositionOffset="getPositionOffset"
+    :level="level"
   ></mark-line>
 </template>
 
@@ -12,6 +13,10 @@ export default {
   name: "CurrentTime",
   components: { MarkLine },
   props: {
+    level: {
+      type: Number,
+      default: 0
+    },
     getPositionOffset: {
       type: Function,
       required: true

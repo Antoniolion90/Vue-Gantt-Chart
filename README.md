@@ -21,15 +21,17 @@ Vue 3, Vuex 4, Vite 8, Element Plus, BetterScroll, Day.js, Vitest, Playwright, E
 
 ## Getting started
 
-Requires Node.js 20.19+ or 22.12+ (Vite 8).
+Requires Node.js 22.13+, 24 or 26+ (the common range of Vite 8, Vitest 5 and ESLint 10).
 
 ```bash
 npm install
 npm run dev      # dev server on http://localhost:3001
+npm run dev:host # the same, also reachable from the local network
 npm run build    # production build into dist/
 npm run preview  # preview the production build
 npm test         # unit tests (Vitest)
 npm run test:e2e # end-to-end tests (Playwright; run `npx playwright install chromium` once)
+                 # E2E_TARGET=preview npm run test:e2e tests the production build
 npm run lint     # ESLint
 npm run format   # Prettier
 ```

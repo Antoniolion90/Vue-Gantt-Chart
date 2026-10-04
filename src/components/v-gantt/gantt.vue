@@ -73,18 +73,21 @@
             <CurrentTime
                 v-if="showCurrentTime"
                 :getPositionOffset="getPositionOffset"
+                :level="markLineLevels[0]"
             />
             <mark-line
                 v-for="(timeConfig, index) in timeLines"
                 :key="index"
                 :timeConfig="timeConfig"
                 :getPositionOffset="getPositionOffset"
+                :level="markLineLevels[index + 1]"
             >
-              <template v-slot="{ timeConfig, getPosition }">
+              <template v-slot="{ timeConfig, getPosition, level }">
                 <slot
                     name="markLine"
                     :timeConfig="timeConfig"
                     :getPosition="getPosition"
+                    :level="level"
                 ></slot>
               </template>
             </mark-line>
@@ -159,6 +162,7 @@
                           :getWidthAbout2Times="getWidthAbout2Times"
                           :currentTime="currentTime"
                           :cellHeight="cellHeight"
+                          :scale="scale"
                           :key="blockData.id"
                           :data-block-id="blockData.id"
                           :blockData="blockData"
@@ -205,11 +209,13 @@ import {
 import {throttle, warn, canMoveBlock} from "@/utils/tool.js";
 import {
   getPositionOffset as _getPositionOffset,
-  getWidthAbout2Times as _getWidthAbout2Times
+  getWidthAbout2Times as _getWidthAbout2Times,
+  assignLabelLevels
 } from "@/utils/gtUtils.js";
 
 import Timeline from "./time-line/index.vue";
 import CurrentTime from "./mark-line/current-time.vue";
+import {estimateLabelWidth} from "./mark-line/labels.js";
 import LeftBar from "./left-bar/index.vue";
 import BlockGroup from "./block-group/block-group.vue";
 import BlockRow from "./block-row/block-row.vue";
@@ -320,7 +326,6 @@ export default {
       // Render an empty frame first, then compute real render range after mounted and render by range to reduce wasted extra rendering
       heightOfBlocksWrapper: 0,
       widthOfBlocksWrapper: 0,
-      currentDay: dayjs(),
       scroller: null,
       resizeObserver: null,
       onScrollToPosition: null,
@@ -462,6 +467,24 @@ export default {
           .toDate()
           .getTime();
     },
+    // Time at the left edge of the viewport, shown in the header
+    currentDay() {
+      const {beginTimeOfTimeLine, scrollLeft, cellWidth, scale} = this;
+      return beginTimeOfTimeLine.add((scrollLeft / cellWidth) * scale, "minute");
+    },
+    // Label levels of the current time line (first) and the time lines, so labels do not overlap
+    markLineLevels() {
+      const lines = [
+        {time: this.currentTime, text: ""},
+        ...(this.timeLines || [])
+      ];
+      return assignLabelLevels(
+        lines.map((line) => ({
+          x: line.time == null ? -Infinity : this.getPositionOffset(dayjs(line.time).toString()),
+          width: estimateLabelWidth(line)
+        }))
+      );
+    },
     startDayjsOfRenderArea() {
       return dayjs(this.startTimeOfRenderArea);
     },
@@ -479,8 +502,37 @@ export default {
     totalWidth() {
       this.$nextTick(() => {
         this.scroller?.refresh();
+        // The scroll position may be clamped to the new width
+        this.scrollHandler();
+      });
+    },
+    // Keep the row in the middle of the viewport when the row height changes
+    cellHeight(newHeight, oldHeight) {
+      const half = this.heightOfBlocksWrapper / 2;
+      const rows = (this.scrollTop + half) / oldHeight;
+      this.$nextTick(() => {
+        this.scroller?.refresh();
+        this.scrollToOffset(this.scrollLeft, rows * newHeight - half);
       });
     }
+  },
+
+  created() {
+    // Keep the time in the middle of the viewport when the timeline is zoomed
+    this.$watch(
+      () => [this.scale, this.cellWidth],
+      (_, [oldScale, oldCellWidth]) => {
+        const half = this.widthOfBlocksWrapper / 2;
+        const centerTime = getBeginTimeOfTimeLine(this.start, oldScale).add(
+            ((this.scrollLeft + half) / oldCellWidth) * oldScale,
+            "minute"
+        );
+        this.$nextTick(() => {
+          this.scroller?.refresh();
+          this.scrollToOffset(this.getPositionOffset(centerTime.toString()) - half, this.scrollTop);
+        });
+      }
+    );
   },
 
   mounted() {
@@ -511,13 +563,9 @@ export default {
     });
     this.scroller.on("scroll", throttle(this.scrollHandler));
     this.onScrollToPosition = (position) => {
-      const scroller = this.scroller;
-      if (!scroller) return;
       // Content may have changed (e.g. groups opened), so update the scroll range first
-      scroller.refresh();
-      const x = Math.min(0, Math.max(scroller.maxScrollX, position.x));
-      const y = Math.min(0, Math.max(scroller.maxScrollY, position.y));
-      scroller.scrollTo(x, y, 600);
+      this.scroller?.refresh();
+      this.scrollToOffset(-position.x, -position.y, 600);
     };
     this.onRefresh = () => {
       this.scroller?.refresh();
@@ -564,50 +612,26 @@ export default {
       this.selector.gantt_markArea.style.left = x + "px";
       this.scrollLeft = -x;
       this.scrollTop = -y;
-
-      /* Calculate time from scroll position */
-      let mileSeconds = -(x / this.cellWidth) * this.scale * 60 * 1000;
-      let scrollTime = this.beginTimeOfTimeLine.valueOf() + mileSeconds;
-      this.currentDay = dayjs(scrollTime);
     },
-    /* Scroll forward by one day */
+    // Scroll to a position (positive offsets), kept inside the scroll range
+    scrollToOffset(left, top, time = 0) {
+      const scroller = this.scroller;
+      if (!scroller) return;
+      const x = Math.min(0, Math.max(scroller.maxScrollX, -left));
+      const y = Math.min(0, Math.max(scroller.maxScrollY, -top));
+      scroller.scrollTo(x, y, time);
+      if (!time) this.scrollHandler();
+    },
+    /* Scroll to the start of the previous day, or to the start of the timeline */
     scrollPreDay() {
-      let tempDay = this.currentDay;
-
-      let startTime = dayjs(this.startTime);
-
-      startTime = startTime.subtract(1, 'hour');
-
-      tempDay = tempDay.subtract(1, 'day').set("hour", 0).set("minute", 0);
-
-      if (tempDay.isBefore(startTime)) {
-        return false;
-      } else {
-        this.currentDay = tempDay;
-        let width = Math.max(0, this.getPositionOffset(tempDay.toString()));
-        if (this.scroller) {
-          this.scroller.scrollTo(-width, this.scroller.y, 400);
-        }
-      }
+      const day = this.currentDay.subtract(1, "day").startOf("day");
+      this.scrollToOffset(Math.max(0, this.getPositionOffset(day.toString())), this.scrollTop, 400);
     },
-    /* Scroll backward by one day */
+    /* Scroll to the start of the next day */
     scrollNextDay() {
-      let tempDay = this.currentDay;
-
-      let endTime = dayjs(this.endTime);
-      endTime = endTime.subtract(1, 'hour');
-
-      tempDay = tempDay.add(1, 'day').set("hour", 0).set("minute", 0);
-
-      if (tempDay.isAfter(endTime)) {
-        return false;
-      } else {
-        this.currentDay = tempDay;
-        let width = this.getPositionOffset(tempDay.toString());
-        if (this.scroller) {
-          this.scroller.scrollTo(-width, this.scroller.y, 400);
-        }
-      }
+      const day = this.currentDay.add(1, "day").startOf("day");
+      if (day.isAfter(this.end)) return;
+      this.scrollToOffset(this.getPositionOffset(day.toString()), this.scrollTop, 400);
     },
     getWidthAbout2Times(start, end) {
       const options = {

@@ -17,6 +17,7 @@ export default defineConfig({
     Components({
       // Project components are registered explicitly; only Element Plus is auto-imported
       dirs: [],
+      dts: false,
       resolvers: [
         ElementPlusResolver({
           importStyle: "css"

@@ -1,23 +1,28 @@
 <template>
-  <div
-    class="gantt-markline"
-    :style="{
-      backgroundColor: timeConfig.color || '#0ca30a',
-      left: getPosition() + 'px'
-    }"
-  >
+  <slot :timeConfig="timeConfig" :getPosition="getPosition" :level="level">
     <div
-      class="gantt-markline-label"
+      class="gantt-markline"
       :style="{
-        backgroundColor: timeConfig.color || '#0ca30a'
+        backgroundColor: timeConfig.color || '#0ca30a',
+        left: getPosition() + 'px'
       }"
     >
-      <template v-if="timeConfig.text">{{ timeConfig.text }} </template>{{ dayjs(timeConfig.time).format("HH:mm:ss") }}
+      <div
+        class="gantt-markline-label"
+        :style="{
+          backgroundColor: timeConfig.color || '#0ca30a',
+          marginTop: level * LABEL_HEIGHT + 'px'
+        }"
+      >
+        <template v-if="timeConfig.text">{{ timeConfig.text }} </template>{{ dayjs(timeConfig.time).format("HH:mm:ss") }}
+      </div>
     </div>
-  </div>
+  </slot>
 </template>
 <script>
 import dayjs from "dayjs";
+import { LABEL_HEIGHT } from "./labels.js";
+
 export default {
   name: "MarkLine",
   props: {
@@ -28,11 +33,17 @@ export default {
     getPositionOffset: {
       type: Function,
       required: true
+    },
+    // Labels of close lines are stacked; level 0 is the top
+    level: {
+      type: Number,
+      default: 0
     }
   },
   data() {
     return {
-      dayjs: dayjs
+      dayjs: dayjs,
+      LABEL_HEIGHT
     };
   },
   computed: {

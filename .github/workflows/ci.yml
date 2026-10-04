@@ -30,6 +30,9 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+        env:
+          # Test the production build: CSS is split per component and the dialog is lazy
+          E2E_TARGET: preview
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

@@ -171,7 +171,7 @@
 
 <script>
 import dayjs from "dayjs";
-import {debounce, buildAdjustList, applyAdjustList} from "@/utils/tool.js";
+import {buildAdjustList, applyAdjustList} from "@/utils/tool.js";
 import {mapMutations, mapState} from "vuex";
 import {defineAsyncComponent, markRaw} from "vue";
 import TaskDetail from "./components/demo/task-detail.vue";
@@ -257,13 +257,7 @@ export default {
       // A new query starts from the first match
       this.currentFindIndex = 0;
       this.findList = [];
-    },
-    cellWidth: debounce(function() {
-      this.$bus.$emit("refresh");
-    }, 300),
-    scale: debounce(function() {
-      this.$bus.$emit("refresh");
-    }, 300)
+    }
   },
   computed: {
     ...mapState([

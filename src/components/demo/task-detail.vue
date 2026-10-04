@@ -57,7 +57,7 @@ export default {
       if (el === this.reference) this.blockData = null
     },
     formatTime(time) {
-      return dayjs(time).format("HH:mm")
+      return dayjs(time).format("MM-DD HH:mm")
     }
   }
 }

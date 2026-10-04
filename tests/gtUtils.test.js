@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getPositionOffset, getWidthAbout2Times } from "@/utils/gtUtils.js";
+import { assignLabelLevels, getPositionOffset, getWidthAbout2Times } from "@/utils/gtUtils.js";
 
 const options = { scale: 60, cellWidth: 50 };
 
@@ -34,5 +34,34 @@ describe("getPositionOffset", () => {
 
   it("follows a changed timeline start", () => {
     expect(getPositionOffset("2024-03-10T03:00:00", "2024-03-10T01:00:00", options)).toBe(100);
+  });
+});
+
+describe("assignLabelLevels", () => {
+  it("keeps separate labels on the top level", () => {
+    expect(assignLabelLevels([{ x: 0, width: 50 }, { x: 60, width: 50 }])).toEqual([0, 0]);
+  });
+
+  it("stacks overlapping labels", () => {
+    const labels = [
+      { x: 0, width: 80 },
+      { x: 20, width: 80 },
+      { x: 40, width: 80 }
+    ];
+    expect(assignLabelLevels(labels)).toEqual([0, 1, 2]);
+  });
+
+  it("reuses a level once it is free and keeps the input order", () => {
+    const labels = [
+      { x: 100, width: 50 },
+      { x: 0, width: 80 },
+      { x: 50, width: 80 }
+    ];
+    // Sorted by x: 0 -> level 0, 50 -> level 1, 100 -> level 0 again
+    expect(assignLabelLevels(labels)).toEqual([0, 0, 1]);
+  });
+
+  it("handles no labels", () => {
+    expect(assignLabelLevels([])).toEqual([]);
   });
 });

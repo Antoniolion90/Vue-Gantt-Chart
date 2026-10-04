@@ -24,12 +24,13 @@
       @mouseleave="hideDetailInfo"
       @dragleave="hideDetailInfo"
     >
-      <div class="runTime">
+      <!-- Narrow blocks show less text; details are always available in the popover -->
+      <div class="runTime" v-if="detailLevel === 'full'">
         <span>S:{{ startToString }}</span>
         <span>E:{{ endToString }}</span>
       </div>
-      <div class="middle">ID{{ blockData.id }}</div>
-      <div class="passenger">{{blockData.passenger}} pax</div>
+      <div class="middle" v-if="detailLevel !== 'none'">ID{{ blockData.id }}</div>
+      <div class="passenger" v-if="detailLevel === 'full'">{{blockData.passenger}} pax</div>
     </div>
   </div>
 
@@ -40,6 +41,10 @@ import { mapState } from "vuex"
 import dayjs from "dayjs"
 import { canMoveBlock } from "@/utils/tool.js"
 
+// Minimal block widths for all details and for the id only, px
+const FULL_DETAIL_WIDTH = 130
+const ID_DETAIL_WIDTH = 60
+
 // Block currently sent to back by double click
 let loweredItem = null
 
@@ -49,6 +54,8 @@ export default {
     blockData: Object,
     currentTime: Object,
     cellHeight: Number,
+    // Minutes per cell; dates are added to times on day scales
+    scale: Number,
     getPositionOffset: Function,
     getWidthAbout2Times: Function
     // startTimeOfRenderArea: Number
@@ -79,11 +86,21 @@ export default {
       if (!this.filterBlockId) return false
       return this.blockData.id.includes(this.filterBlockId)
     },
+    // How much text fits into the block
+    detailLevel() {
+      if (this.blockWidth >= FULL_DETAIL_WIDTH) return "full"
+      if (this.blockWidth >= ID_DETAIL_WIDTH) return "id"
+      return "none"
+    },
+    timeFormat() {
+      // A cell of a day scale covers whole days, so the time alone is ambiguous
+      return this.scale >= 1440 ? "MM-DD HH:mm" : "HH:mm"
+    },
     startToString() {
-      return dayjs(this.blockData.start).format("HH:mm")
+      return dayjs(this.blockData.start).format(this.timeFormat)
     },
     endToString() {
-      return dayjs(this.blockData.end).format("HH:mm")
+      return dayjs(this.blockData.end).format(this.timeFormat)
     },
     cutClass() {
       const isCutBlock = this.cutBlock ? this.cutBlock.id === this.blockData.id : false
@@ -152,12 +169,24 @@ export default {
 .runTime {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+}
+.middle, .passenger {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.passenger {
+  padding-right: 5px;
 }
 .plan {
   display: flex;
   align-items: center;
   box-sizing: border-box;
   height: 100%;
+  // Text never leaves the block, even if a narrow block shows some of it
+  overflow: hidden;
   border: 1px solid #CCCCCC;
   border-radius: 10px;
   color: #333333;

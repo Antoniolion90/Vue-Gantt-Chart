@@ -105,3 +105,42 @@ export async function emptyPointInRow(page, rowId) {
   expect(point, "row has free space").not.toBeNull();
   return point;
 }
+
+/** Change view settings through the Settings popover */
+export async function setViewOptions(page, { scaleLabel, rowHeight }) {
+  await page.getByRole("button", { name: "Settings" }).click();
+  const form = page.locator(".gantt-config-options").filter({ visible: true });
+  if (scaleLabel) {
+    await form.locator(".el-form-item", { hasText: "Minutes per scale" }).locator(".el-select").click();
+    await page
+      .locator(".el-select-dropdown__item")
+      .filter({ visible: true })
+      .filter({ hasText: new RegExp(`^${scaleLabel}$`) })
+      .click();
+  }
+  if (rowHeight) {
+    const input = form.locator(".el-form-item", { hasText: "Row height" }).locator("input");
+    await input.fill(String(rowHeight));
+    await input.press("Enter");
+  }
+  // Choosing a select option may already close the popover; a click on the page title
+  // closes it in any case and does nothing else
+  await page.locator(".sub-title").click();
+  await expect(form).toBeHidden();
+  // Let the gantt re-render and restore the scroll position
+  await page.waitForTimeout(400);
+}
+
+/** Scroll the chart with the mouse wheel */
+export async function scrollChart(page, dx, dy) {
+  const box = await page.locator(".gantt-blocks-wrapper").boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(dx, dy);
+  await page.waitForTimeout(800);
+}
+
+/** Center of the chart viewport */
+export async function chartCenter(page) {
+  const box = await page.locator(".gantt-blocks-wrapper").boundingBox();
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}

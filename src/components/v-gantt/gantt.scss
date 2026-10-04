@@ -188,6 +188,8 @@ $font-gray:#666;
   }
 
   &-markline-area {
+    // Lines and labels lie over the blocks and must not catch their clicks
+    pointer-events: none;
     position: absolute;
     z-index: 99;
   }
