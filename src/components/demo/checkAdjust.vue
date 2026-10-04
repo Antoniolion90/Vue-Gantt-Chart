@@ -18,7 +18,7 @@
         <el-table-column
             :label="'Selected ('+ tableSelection.length+'/'+ adjustList.length+')'">
           <template #default="scope">
-            <el-tag :type="scope.row.conflictList.length===0?'success':'danger'" size="middle">
+            <el-tag :type="scope.row.conflictList.length===0?'success':'danger'">
               {{ scope.row.conflictList.length === 0 ? "No conflict" : "Has conflict" }}
             </el-tag>
             {{ scope.row.blockId }}
@@ -65,7 +65,7 @@
       </div>
 
       <div class="check-result-info clearfix">
-        <el-tag :type="selectRow.conflictList.length===0?'success':'danger'" size="middle">
+        <el-tag :type="selectRow.conflictList.length===0?'success':'danger'">
           {{ selectRow.conflictList.length === 0 ? "Validation passed" : "Validation failed" }}
         </el-tag>
         <el-button type="primary" class="btn-check" @click="checkAndInsert">Confirm adjustment</el-button>
@@ -78,11 +78,27 @@
 
 <script>
 import {mapState, mapMutations} from "vuex";
+import dayjs from "dayjs";
 import {buildAdjustList, applyAdjustList, revalidateAdjust} from "@/utils/tool.js";
 
 export default {
   name: "checkAdjust",
   emits: ["closeDialog"],
+  props: {
+    // Changed by the parent each time the dialog is opened for a new adjustment
+    requestId: {
+      type: Number,
+      default: 0
+    }
+  },
+  watch: {
+    requestId: {
+      handler() {
+        this.calcConflictList();
+      },
+      immediate: true
+    }
+  },
   data() {
     return {
       adjustList: [],
@@ -109,7 +125,7 @@ export default {
     calcConflictList() {
 
       this.selectRow = null;
-      this.adjustList = buildAdjustList(this);
+      this.adjustList = buildAdjustList(this, dayjs());
 
       if (this.adjustList.length) {
         this.$nextTick(() => {

@@ -11,13 +11,13 @@ Fork of [liyang5945/vue-drag-gantt-chart](https://github.com/liyang5945/vue-drag
 - **Data grouping**: rows can be grouped by different attributes; groups can be collapsed.
 - **Search**: highlights matches and scrolls to the matched task. If there are multiple matches, clicking search again jumps to the next one.
 - **Drag adjustment**: blocks are moved across rows with native browser drag events and validated (currently time conflicts). After a move, a shadow block can show the previous position; the shadow and the confirmation dialog are configurable.
-- **Context menu**: when dragging is inconvenient, tasks can be moved from the right-click menu (copy / paste / swap).
+- **Context menu**: when dragging is inconvenient, tasks can be moved from the right-click menu (cut / paste / swap); Escape cancels a cut. Tasks that already started can not be moved.
 
 ### Demo: [Online Preview](https://liyang5945.github.io/vue-drag-gantt-chart) (original project)
 
 ## Tech stack
 
-Vue 3, Vuex 4, Vite 8, Element Plus, BetterScroll, Day.js, Vitest, ESLint, Prettier.
+Vue 3, Vuex 4, Vite 8, Element Plus, BetterScroll, Day.js, Vitest, Playwright, ESLint, Prettier.
 
 ## Getting started
 
@@ -29,6 +29,7 @@ npm run dev      # dev server on http://localhost:3001
 npm run build    # production build into dist/
 npm run preview  # preview the production build
 npm test         # unit tests (Vitest)
+npm run test:e2e # end-to-end tests (Playwright; run `npx playwright install chromium` once)
 npm run lint     # ESLint
 npm run format   # Prettier
 ```
@@ -44,7 +45,8 @@ src/
   utils/            Time/position calculations, conflict checking, event bus
   store/            Vuex store with selection and drag state
   api/              Mock data generator
-tests/              Unit tests for utils
+tests/              Unit and component tests (Vitest)
+e2e/                End-to-end tests (Playwright)
 ```
 
 ## Usage

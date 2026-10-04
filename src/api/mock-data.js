@@ -13,8 +13,6 @@ const nameList = "Hope,SwiftWing,Lightbringer,Scout,PowerGod,Officer,LightningMe
 
 const typeList = "🚅,🚈,🚄".split(",");
 
-
-
 function generateRow(index, colNum, times) {
   const rowId = `JHR${100 + (index % 900)}${String.fromCharCode(65 + (index % 26))}${String.fromCharCode(65 + ((index + 1) % 26))}`;
   const rowType = typeList[index % typeList.length];
@@ -24,14 +22,18 @@ function generateRow(index, colNum, times) {
   const rgb = "rgb" + color;
 
   const gtArray = [];
+  const rangeEnd = dayjs(times[1]);
   let tempStart;
   let tempEnd = dayjs(times[0]);
 
   for (let i = 0; i < colNum; i++) {
     tempStart = tempEnd.add((index + i) % 6 + 1, "hour");
     tempEnd = tempStart.add((index + i) % 5 + 2, "hour");
+    // Blocks past the end of the range would never be visible
+    if (tempEnd.isAfter(rangeEnd)) break;
     gtArray.push({
-      id: `${String.fromCharCode(65 + (i % 26))}${String.fromCharCode(66 + (i % 26))}${1000 + i + index}`,
+      // Row number and a fixed-width column number keep ids unique
+      id: `${String.fromCharCode(65 + (i % 26))}${String.fromCharCode(65 + ((i + 1) % 26))}${index % 10000}${String(i).padStart(3, "0")}`,
       passenger: 10 + ((index + i) % 191),
       start: tempStart.toString(),
       end: tempEnd.toString(),

@@ -125,16 +125,34 @@ export function checkConflict(blockItem, row, targetBlockItem) {
 }
 
 /**
+ * Whether a block can be moved: it has not started yet and is not a shadow of a moved block
+ *
+ * @export
+ * @param {Object} block
+ * @param {*} now current time, anything dayjs accepts
+ * @returns {boolean}
+ */
+export function canMoveBlock(block, now) {
+  if (!block || block.movedStatus === "before") return false;
+  return dayjs(block.start).isAfter(dayjs(now));
+}
+
+/**
  * Build adjustment list for a move (or swap, when a target block exists).
- * Moves into the row the block already belongs to are skipped,
- * and a shadow of a moved block is never swapped.
+ * Moves into the row the block already belongs to are skipped.
+ * A target block that can not be moved (a shadow, or started when `now` is given)
+ * is not swapped: the drop is treated as a drop on its row.
  *
  * @export
  * @param {{currentBlock, currentRow, targetBlock, targetRow}} selection
+ * @param {*} [now] current time; when given, blocks that already started are not moved
  * @returns {Array} adjustments produced by checkConflict
  */
-export function buildAdjustList({ currentBlock, currentRow, targetBlock, targetRow }) {
-  if (targetBlock && targetBlock.movedStatus === "before") targetBlock = null;
+export function buildAdjustList({ currentBlock, currentRow, targetBlock, targetRow }, now) {
+  const isMovable = (block) =>
+    now === undefined ? block.movedStatus !== "before" : canMoveBlock(block, now);
+  if (currentBlock && !isMovable(currentBlock)) return [];
+  if (targetBlock && !isMovable(targetBlock)) targetBlock = null;
   const adjustList = [];
   if (targetRow && currentBlock && currentBlock.parentId !== targetRow.id) {
     adjustList.push(checkConflict(currentBlock, targetRow, targetBlock || null));

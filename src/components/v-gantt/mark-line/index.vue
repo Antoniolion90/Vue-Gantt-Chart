@@ -12,7 +12,7 @@
         backgroundColor: timeConfig.color || '#0ca30a'
       }"
     >
-      {{ dayjs(timeConfig.time).format("HH:mm:ss") }}
+      <template v-if="timeConfig.text">{{ timeConfig.text }} </template>{{ dayjs(timeConfig.time).format("HH:mm:ss") }}
     </div>
   </div>
 </template>

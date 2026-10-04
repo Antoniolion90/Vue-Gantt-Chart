@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { applyAdjustList, buildAdjustList, checkConflict, revalidateAdjust } from "@/utils/tool.js";
+import {
+  applyAdjustList,
+  buildAdjustList,
+  canMoveBlock,
+  checkConflict,
+  revalidateAdjust
+} from "@/utils/tool.js";
 
 const block = (id, start, end, parentId, extra = {}) => ({ id, start, end, parentId, ...extra });
 
@@ -216,5 +222,59 @@ describe("applyAdjustList", () => {
     const rows = makeRows();
     const adjust = [{ blockItem: block("Z", "", "", "nope"), blockId: "Z", targetRowId: "R1" }];
     expect(applyAdjustList(rows, adjust, true)).toEqual(rows);
+  });
+});
+
+describe("canMoveBlock", () => {
+  const now = "2024-03-10T12:00";
+
+  it("allows blocks that have not started", () => {
+    expect(canMoveBlock(block("A", "2024-03-10T13:00", "2024-03-10T14:00", "R"), now)).toBe(true);
+  });
+
+  it("forbids blocks in progress or in the past", () => {
+    expect(canMoveBlock(block("A", "2024-03-10T11:00", "2024-03-10T13:00", "R"), now)).toBe(false);
+    expect(canMoveBlock(block("A", "2024-03-10T09:00", "2024-03-10T10:00", "R"), now)).toBe(false);
+  });
+
+  it("forbids shadows of moved blocks and missing blocks", () => {
+    const shadow = block("A", "2024-03-10T13:00", "2024-03-10T14:00", "R", { movedStatus: "before" });
+    expect(canMoveBlock(shadow, now)).toBe(false);
+    expect(canMoveBlock(null, now)).toBe(false);
+  });
+});
+
+describe("buildAdjustList with the current time", () => {
+  // A (10:00-12:00) is in R1, B (11:00-13:00) and C (14:00-15:00) are in R2
+  const selection = (rows, targetBlock) => ({
+    currentBlock: rows[0].gtArray[0],
+    currentRow: rows[0],
+    targetBlock,
+    targetRow: rows[1]
+  });
+
+  it("does not move a block that already started", () => {
+    const rows = makeRows();
+    expect(buildAdjustList(selection(rows, null), "2024-03-10T10:30")).toEqual([]);
+  });
+
+  it("does not swap a target block that already started", () => {
+    const rows = [
+      { id: "R1", gtArray: [block("L", "2024-03-10T16:00", "2024-03-10T17:00", "R1")] },
+      { id: "R2", gtArray: [block("E", "2024-03-10T08:00", "2024-03-10T10:00", "R2")] }
+    ];
+    // E started at 08:00, L starts at 16:00: L moves to R2, E stays where it is
+    const list = buildAdjustList(selection(rows, rows[1].gtArray[0]), "2024-03-10T09:00");
+    expect(list.map((a) => [a.blockId, a.targetRowId])).toEqual([["L", "R2"]]);
+    expect(list[0].targetBlockItem).toBeNull();
+  });
+
+  it("swaps when both blocks have not started", () => {
+    const rows = makeRows();
+    const list = buildAdjustList(selection(rows, rows[1].gtArray[1]), "2024-03-10T09:00");
+    expect(list.map((a) => [a.blockId, a.targetRowId])).toEqual([
+      ["A", "R2"],
+      ["C", "R1"]
+    ]);
   });
 });

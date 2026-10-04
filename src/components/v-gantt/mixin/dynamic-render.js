@@ -111,8 +111,8 @@ const dynamicRender = {
         datas: groupDatas
       } = this;
 
-      // No height means no need to render elements
-      if (heightOfBlocksWrapper === 0 || cellHeight === 0) {
+      // No height or a collapsed group means no need to render elements
+      if (heightOfBlocksWrapper === 0 || cellHeight === 0 || !this.isOpen) {
         this.startRenderNum = 0;
         this.endRenderNum = 0;
         return;

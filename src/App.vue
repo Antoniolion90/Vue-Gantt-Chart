@@ -15,13 +15,22 @@
         >
         </el-date-picker>
         <span class="form-title">Rows:</span>
-        <el-input
-            v-model.number="rowNum"
+        <el-input-number
+            v-model="rowNum"
+            :min="1"
+            :max="5000"
+            :step="100"
+            controls-position="right"
+            value-on-clear="min"
             class="num-input"
         />
         <span class="form-title">Columns:</span>
-        <el-input
-            v-model.number="colNum"
+        <el-input-number
+            v-model="colNum"
+            :min="1"
+            :max="200"
+            controls-position="right"
+            value-on-clear="min"
             class="num-input"
         />
         <el-button type="primary" @click="initData">Generate</el-button>
@@ -130,7 +139,7 @@
             <el-checkbox
                 v-for="(rowType,index) in rowTypes"
                 :key="index"
-                :label="rowType">{{ rowType }}
+                :value="rowType">{{ rowType }}
             </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
@@ -139,7 +148,7 @@
             <el-checkbox
                 v-for="(speed,index) in speedTypes"
                 :key="index"
-                :label="speed">{{ speed }}
+                :value="speed">{{ speed }}
             </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
@@ -154,7 +163,7 @@
         v-model="checkDialogVisible"
         width="1000px">
 
-      <check-adjust ref="checkAdjust" @closeDialog="checkDialogVisible=false"/>
+      <check-adjust :request-id="checkRequestId" @closeDialog="checkDialogVisible=false"/>
 
     </el-dialog>
   </div>
@@ -164,7 +173,7 @@
 import dayjs from "dayjs";
 import {debounce, buildAdjustList, applyAdjustList} from "@/utils/tool.js";
 import {mapMutations, mapState} from "vuex";
-import checkAdjust from "./components/demo/checkAdjust.vue";
+import {defineAsyncComponent, markRaw} from "vue";
 import TaskDetail from "./components/demo/task-detail.vue";
 import {normalizeDateRange, findBlocks, getTimeOffset, groupRows} from "@/utils/demoUtils.js";
 import {mockDatas} from "@/api/mock-data";
@@ -188,7 +197,11 @@ const scaleList = `1,2,3,4,5,6,10,12,15,20,30,60,120,180,240,360,720,1440,2880,4
     });
 export default {
   name: "App",
-  components: {checkAdjust, TaskDetail},
+  components: {
+    // Loaded on first use: it pulls el-table and el-dialog code
+    checkAdjust: defineAsyncComponent(() => import("./components/demo/checkAdjust.vue")),
+    TaskDetail
+  },
   data() {
     return {
       searchValue: "",
@@ -228,12 +241,17 @@ export default {
       selectSpeedTypes: [],
       findList: [],
       currentFindIndex: 0,
-      dataSeed: 0
+      dataSeed: 0,
+      checkRequestId: 0
     };
   },
   watch: {
     showRowList() {
       this.classifyData();
+    },
+    times() {
+      // Data of the previous range would be outside the new timeline
+      this.initData();
     },
     searchValue() {
       // A new query starts from the first match
@@ -314,8 +332,7 @@ export default {
     initData() {
       this.dataSeed = Date.now();
       let list = mockDatas(this.rowNum, this.colNum, this.times, this.dataSeed);
-      this.setShowRowList([...list]);
-      this.classifyData();
+      this.setShowRowList(list);
     },
     updateTimeLines(timeA, timeB) {
       this.timeLines = [
@@ -332,7 +349,12 @@ export default {
     },
     /* Data grouping by every combination of selected types and speed ranges */
     classifyData() {
-      this.datas = groupRows(this.showRowList, this.selectRowTypes, this.selectSpeedTypes, this.datas);
+      const groups = groupRows(this.showRowList, this.selectRowTypes, this.selectSpeedTypes, this.datas);
+      // Rows are replaced, never mutated, so they do not need deep reactivity
+      groups.forEach(group => {
+        group.children = markRaw(group.children);
+      });
+      this.datas = groups;
     },
     confirmClassify() {
       this.classifyData();
@@ -355,7 +377,7 @@ export default {
       this.currentFindIndex = this.findList.length
           ? (this.currentFindIndex + 1) % matches.length
           : 0;
-      this.findList = matches;
+      this.findList = markRaw(matches);
       groupIndexes.forEach(index => {
         this.datas[index].isOpen = true;
       });
@@ -376,7 +398,7 @@ export default {
     },
     dragTask() {
       // Nothing to do, e.g. a drop into the row the block is already in
-      if (!buildAdjustList(this).length) return;
+      if (!buildAdjustList(this, dayjs()).length) return;
       if (this.showDragConfirm) {
         this.checkAssign();
       } else {
@@ -385,12 +407,11 @@ export default {
     },
     checkAssign() {
       this.checkDialogVisible = true;
-      this.$nextTick(() => {
-        this.$refs.checkAdjust.calcConflictList();
-      });
+      // The dialog recalculates conflicts when the request id changes
+      this.checkRequestId += 1;
     },
     dragBlock() {
-      let adjustList = buildAdjustList(this);
+      let adjustList = buildAdjustList(this, dayjs());
 
       // Check whether conflicts exist
       let hasConflict = adjustList.some(adjustObj => {

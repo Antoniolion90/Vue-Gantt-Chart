@@ -38,6 +38,7 @@
 <script>
 import { mapState } from "vuex"
 import dayjs from "dayjs"
+import { canMoveBlock } from "@/utils/tool.js"
 
 // Block currently sent to back by double click
 let loweredItem = null
@@ -64,9 +65,7 @@ export default {
     ]),
     canDrag() {
       // Draggable only if not moved yet and not in progress/completed
-      let { blockData, currentTime } = this
-      let start = dayjs(blockData.start)
-      return start.isAfter(currentTime) && this.blockData.movedStatus !== "before"
+      return canMoveBlock(this.blockData, this.currentTime)
     },
     positionOffset() {
       const { blockData } = this

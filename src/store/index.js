@@ -1,3 +1,4 @@
+import { markRaw } from "vue";
 import { createStore } from "vuex";
 
 export default createStore({
@@ -44,7 +45,8 @@ export default createStore({
       state.handleRow = object;
     },
     setShowRowList(state, object) {
-      state.showRowList = object;
+      // Rows are replaced, never mutated, so they are kept out of deep reactivity
+      state.showRowList = markRaw(object);
     },
     setShowMovedBlock(state, bool) {
       state.showMovedBlock = bool;

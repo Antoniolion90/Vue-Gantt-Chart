@@ -1,10 +1,10 @@
 <template>
   <div class="gantt-chart">
     <v-contextmenu ref="blockItemMenu">
-      <v-contextmenu-item class="right-menu-item" @click="moveCurrentBlock"
-      >Copy
+      <v-contextmenu-item class="right-menu-item" :disabled="!canMoveHandleBlock" @click="moveCurrentBlock"
+      >Cut
       </v-contextmenu-item>
-      <v-contextmenu-item class="right-menu-item" :disabled="!cutBlock" @click="switchBlock"
+      <v-contextmenu-item class="right-menu-item" :disabled="!cutBlock || !canMoveHandleBlock" @click="switchBlock"
       >Swap
       </v-contextmenu-item>
     </v-contextmenu>
@@ -142,6 +142,7 @@
                       v-contextmenu:blockRowMenu
                       :cellHeight="cellHeight"
                       :key="rowData.id"
+                      :data-row-id="rowData.id"
                       :rowData="rowData"
                       :showList="showList"
                       :style="style"
@@ -159,6 +160,7 @@
                           :currentTime="currentTime"
                           :cellHeight="cellHeight"
                           :key="blockData.id"
+                          :data-block-id="blockData.id"
                           :blockData="blockData"
                           @dragover.prevent
                           @dragstart="handleDragStart($event, rowData, blockData)"
@@ -200,7 +202,7 @@ import {
   isDayScale,
   scaleList
 } from "@/utils/timeLineUtils.js";
-import {throttle, warn} from "@/utils/tool.js";
+import {throttle, warn, canMoveBlock} from "@/utils/tool.js";
 import {
   getPositionOffset as _getPositionOffset,
   getWidthAbout2Times as _getWidthAbout2Times
@@ -337,6 +339,10 @@ export default {
       "handleBlock",
       "handleRow"
     ]),
+    // Blocks that already started (or shadows of moved blocks) can not be cut or swapped
+    canMoveHandleBlock() {
+      return canMoveBlock(this.handleBlock, this.currentTime);
+    },
     start() {
       return dayjs(this.startTime);
     },

@@ -4,6 +4,7 @@
     v-if="reference"
     :visible="!!blockData"
     :virtual-ref="reference"
+    virtual-triggering
     placement="bottom"
     :width="280"
   >
