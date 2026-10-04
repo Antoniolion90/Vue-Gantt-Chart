@@ -116,6 +116,8 @@ export function checkConflict(blockItem, row, targetBlockItem) {
   return {
     blockItem: blockItem,
     targetRowId: row.id,
+    // Block excluded from the check (swap target), kept for revalidation
+    targetBlockItem: targetBlockItem || null,
     blockId: blockItem.id,
     adjustType: "Move",
     conflictList: conflictList
@@ -123,25 +125,51 @@ export function checkConflict(blockItem, row, targetBlockItem) {
 }
 
 /**
- * Build adjustment list for a move (or swap, when a target block exists)
+ * Build adjustment list for a move (or swap, when a target block exists).
+ * Moves into the row the block already belongs to are skipped,
+ * and a shadow of a moved block is never swapped.
  *
  * @export
  * @param {{currentBlock, currentRow, targetBlock, targetRow}} selection
  * @returns {Array} adjustments produced by checkConflict
  */
 export function buildAdjustList({ currentBlock, currentRow, targetBlock, targetRow }) {
+  if (targetBlock && targetBlock.movedStatus === "before") targetBlock = null;
   const adjustList = [];
-  if (targetRow && currentBlock) {
+  if (targetRow && currentBlock && currentBlock.parentId !== targetRow.id) {
     adjustList.push(checkConflict(currentBlock, targetRow, targetBlock || null));
   }
-  if (currentRow && targetBlock) {
+  if (currentRow && targetBlock && targetBlock.parentId !== currentRow.id) {
     adjustList.push(checkConflict(targetBlock, currentRow, currentBlock || null));
   }
   return adjustList;
 }
 
 /**
- * Apply adjustments to a copy of the row list
+ * Check an adjustment again against the current rows. Conflicts ignored by the user stay ignored.
+ *
+ * @export
+ * @param {Object} adjustItem adjustment produced by checkConflict
+ * @param {Array} rows current row list
+ * @returns {Array} conflicts that are not ignored
+ */
+export function revalidateAdjust(adjustItem, rows) {
+  const targetRow = rows.find((row) => row.id === adjustItem.targetRowId);
+  if (!targetRow) return [];
+  const ignored = new Set(
+    adjustItem.conflictList.filter((item) => item.isIgnore).map((item) => item.conflictDesc)
+  );
+  const { conflictList } = checkConflict(
+    adjustItem.blockItem,
+    targetRow,
+    adjustItem.targetBlockItem
+  );
+  return conflictList.filter((item) => !ignored.has(item.conflictDesc));
+}
+
+/**
+ * Apply adjustments to the row list. Only changed rows and blocks are copied,
+ * the source list is not mutated.
  *
  * @export
  * @param {Array} rows source row list, not mutated
@@ -150,30 +178,55 @@ export function buildAdjustList({ currentBlock, currentRow, targetBlock, targetR
  * @returns {Array} new row list
  */
 export function applyAdjustList(rows, adjustList, showMovedBlock) {
-  const rowList = cloneDeep(rows);
+  const rowList = rows.slice();
+  const copied = new Set();
+
+  // Copy a row (and its block list) once before changing it
+  function getRow(id) {
+    const index = rowList.findIndex((row) => row.id === id);
+    if (index === -1) return null;
+    if (!copied.has(id)) {
+      rowList[index] = { ...rowList[index], gtArray: rowList[index].gtArray.slice() };
+      copied.add(id);
+    }
+    return rowList[index];
+  }
+
   adjustList.forEach((adjustItem) => {
-    const currentRow = rowList.find((row) => row.id === adjustItem.blockItem.parentId);
-    const targetRow = rowList.find((row) => row.id === adjustItem.targetRowId);
+    const { blockId } = adjustItem;
+    const sourceRowId = adjustItem.blockItem.parentId;
+    if (sourceRowId === adjustItem.targetRowId) return;
+    const currentRow = getRow(sourceRowId);
+    const targetRow = getRow(adjustItem.targetRowId);
     if (!currentRow || !targetRow) return;
 
-    const movedBeforeBlock = currentRow.gtArray.find(
-      (blockItem) => blockItem.id === adjustItem.blockId
+    const movedIndex = currentRow.gtArray.findIndex(
+      (blockItem) => blockItem.id === blockId && blockItem.movedStatus !== "before"
     );
-    if (showMovedBlock && movedBeforeBlock && movedBeforeBlock.movedStatus !== "after") {
-      // Not moved before, keep it as a shadow
-      movedBeforeBlock.movedStatus = "before";
-    } else {
-      // Filter out items that were already moved once
-      currentRow.gtArray = currentRow.gtArray.filter(
-        (blockItem) => blockItem.id !== adjustItem.blockId
-      );
+    const movedBlock = currentRow.gtArray[movedIndex];
+    if (showMovedBlock && movedBlock && movedBlock.movedStatus !== "after") {
+      // Moved for the first time, keep it as a shadow
+      currentRow.gtArray[movedIndex] = { ...movedBlock, movedStatus: "before" };
+    } else if (movedIndex !== -1) {
+      // Already moved once, or shadows are off
+      currentRow.gtArray.splice(movedIndex, 1);
     }
-    const newBlock = cloneDeep(adjustItem.blockItem);
-    newBlock.movedStatus = "after";
-    newBlock.parentId = targetRow.id;
-    targetRow.gtArray.push(newBlock);
+
+    const shadowIndex = targetRow.gtArray.findIndex(
+      (blockItem) => blockItem.id === blockId && blockItem.movedStatus === "before"
+    );
+    if (shadowIndex !== -1) {
+      // Back to its original row: restore the block instead of adding a duplicate
+      // eslint-disable-next-line no-unused-vars
+      const { movedStatus, ...restored } = targetRow.gtArray[shadowIndex];
+      targetRow.gtArray[shadowIndex] = restored;
+      return;
+    }
+    targetRow.gtArray.push({
+      ...cloneDeep(adjustItem.blockItem),
+      movedStatus: "after",
+      parentId: targetRow.id
+    });
   });
   return rowList;
 }
-
-

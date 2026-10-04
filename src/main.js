@@ -8,15 +8,15 @@ import contextMenu from "@/components/context-menu/index";
 import "@/components/context-menu/style.css";
 import "@/style/index.sass";
 
-import "element-plus/dist/index.css";
-import { ElLoading, ElMessage } from "element-plus";
+// Element Plus component styles are imported on demand by unplugin-vue-components;
+// ElMessage is used from code, so its style is imported here
+import { ElMessage } from "element-plus";
+import "element-plus/es/components/message/style/css";
 
 const app = createApp(App);
 
 app.config.globalProperties.$bus = bus;
-app.config.globalProperties.$loading = ElLoading.service;
 app.config.globalProperties.$message = ElMessage;
-app.use(ElLoading);
 app.use(store);
 app.use(contextMenu);
 app.use(vGanttChart);

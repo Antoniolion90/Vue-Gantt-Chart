@@ -78,10 +78,11 @@
 
 <script>
 import {mapState, mapMutations} from "vuex";
-import {buildAdjustList, applyAdjustList} from "@/utils/tool.js";
+import {buildAdjustList, applyAdjustList, revalidateAdjust} from "@/utils/tool.js";
 
 export default {
   name: "checkAdjust",
+  emits: ["closeDialog"],
   data() {
     return {
       adjustList: [],
@@ -101,10 +102,13 @@ export default {
   },
   methods: {
     ...mapMutations([
-      "setShowRowList"
+      "setShowRowList",
+      "setCutBlock",
+      "setCutRow"
     ]),
     calcConflictList() {
 
+      this.selectRow = null;
       this.adjustList = buildAdjustList(this);
 
       if (this.adjustList.length) {
@@ -133,23 +137,12 @@ export default {
     checkAdjustResult() {
       if (!this.tableSelection.length) {
         this.$message.error("Select at least one item to revalidate!");
-      } else {
-        this.tableSelection.forEach(adjustObj => {
-          let blockId = adjustObj.blockId;
-          let adjustIndex = 0;
-          this.adjustList.map((rawAdjustItem, rawIndex) => {
-            if (blockId === rawAdjustItem.blockId) {
-              adjustIndex = rawIndex;
-            }
-          });
-          /* Filter ignored conditions */
-          adjustObj.conflictList = adjustObj.conflictList.filter(item => {
-            return item.isIgnore === false;
-          });
-          this.adjustList[adjustIndex] = adjustObj;
-        });
-        this.$refs.singleTable.setCurrentRow(this.adjustList[0]);
+        return;
       }
+      // Check the selected adjustments again; ignored conflicts are dropped
+      this.tableSelection.forEach(adjustObj => {
+        adjustObj.conflictList = revalidateAdjust(adjustObj, this.showRowList);
+      });
     },
     checkAndInsert() {
       this.checkAdjustResult();
@@ -165,6 +158,9 @@ export default {
         return false;
       } else {
         this.setShowRowList(applyAdjustList(this.showRowList, this.tableSelection, this.showMovedBlock));
+        // The cut block is placed now, so it can not be pasted again
+        this.setCutBlock(null);
+        this.setCutRow(null);
         this.$emit("closeDialog");
       }
     }

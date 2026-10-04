@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import dayjs from "dayjs";
-import { findBlocks, getTimeOffset, normalizeDateRange } from "@/utils/demoUtils.js";
+import { findBlocks, getTimeOffset, groupRows, normalizeDateRange } from "@/utils/demoUtils.js";
 
 describe("normalizeDateRange", () => {
   it("covers whole first and last days", () => {
@@ -83,5 +83,59 @@ describe("findBlocks", () => {
   it("returns nothing when there are no matches", () => {
     const groups = [{ isOpen: true, children: [row("A1")] }];
     expect(findBlocks(groups, "Z", cellHeight)).toEqual({ matches: [], groupIndexes: [] });
+  });
+});
+
+describe("groupRows", () => {
+  const rows = [
+    { id: "r1", type: "🚅", speed: 10 },
+    { id: "r2", type: "🚈", speed: 60 },
+    { id: "r3", type: "🚅", speed: 120 },
+    { id: "r4", type: "🚄", speed: 50 }
+  ];
+  const ids = (group) => group.children.map((row) => row.id);
+
+  it("puts all rows in one group without a selection", () => {
+    const groups = groupRows(rows, [], []);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toMatchObject({ groupType: {}, isOpen: true });
+    expect(ids(groups[0])).toEqual(["r1", "r2", "r3", "r4"]);
+  });
+
+  it("groups by type", () => {
+    const groups = groupRows(rows, ["🚅", "🚄"], []);
+    expect(groups.map((g) => g.groupType)).toEqual([{ type: "🚅" }, { type: "🚄" }]);
+    expect(groups.map(ids)).toEqual([["r1", "r3"], ["r4"]]);
+  });
+
+  it("groups by speed ranges, the last range is open-ended", () => {
+    const groups = groupRows(rows, [], ["0~50", "50~100", "100"]);
+    expect(groups.map(ids)).toEqual([["r1"], ["r2", "r4"], ["r3"]]);
+  });
+
+  it("groups by every speed and type combination", () => {
+    const groups = groupRows(rows, ["🚅", "🚈"], ["0~50", "50~100"]);
+    expect(groups.map((g) => g.groupType)).toEqual([
+      { speed: "0~50", type: "🚅" },
+      { speed: "0~50", type: "🚈" },
+      { speed: "50~100", type: "🚅" },
+      { speed: "50~100", type: "🚈" }
+    ]);
+    expect(groups.map(ids)).toEqual([["r1"], [], [], ["r2"]]);
+    expect(groups[0]).toMatchObject({ speed: "0~50", type: "🚅" });
+  });
+
+  it("keeps groups collapsed after regrouping", () => {
+    const first = groupRows(rows, ["🚅", "🚈"], []);
+    first[1].isOpen = false;
+    const second = groupRows(rows.slice(1), ["🚅", "🚈"], [], first);
+    expect(second.map((g) => g.isOpen)).toEqual([true, false]);
+  });
+
+  it("opens groups that did not exist before", () => {
+    const first = groupRows(rows, ["🚅"], []);
+    first[0].isOpen = false;
+    const second = groupRows(rows, ["🚅", "🚈"], [], first);
+    expect(second.map((g) => g.isOpen)).toEqual([false, true]);
   });
 });

@@ -118,6 +118,7 @@
           :datas="datas"
       >
       </v-gantt-chart>
+      <task-detail />
 
     </div>
     <el-dialog
@@ -145,7 +146,7 @@
       </el-form>
       <div style="text-align: right;padding-top: 25px;">
         <el-button @click="classifyDialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="classifyData">Confirm</el-button>
+        <el-button type="primary" @click="confirmClassify">Confirm</el-button>
       </div>
     </el-dialog>
     <el-dialog
@@ -164,7 +165,8 @@ import dayjs from "dayjs";
 import {debounce, buildAdjustList, applyAdjustList} from "@/utils/tool.js";
 import {mapMutations, mapState} from "vuex";
 import checkAdjust from "./components/demo/checkAdjust.vue";
-import {normalizeDateRange, findBlocks, getTimeOffset} from "@/utils/demoUtils.js";
+import TaskDetail from "./components/demo/task-detail.vue";
+import {normalizeDateRange, findBlocks, getTimeOffset, groupRows} from "@/utils/demoUtils.js";
 import {mockDatas} from "@/api/mock-data";
 
 const scaleList = `1,2,3,4,5,6,10,12,15,20,30,60,120,180,240,360,720,1440,2880,4320`
@@ -186,7 +188,7 @@ const scaleList = `1,2,3,4,5,6,10,12,15,20,30,60,120,180,240,360,720,1440,2880,4
     });
 export default {
   name: "App",
-  components: {checkAdjust},
+  components: {checkAdjust, TaskDetail},
   data() {
     return {
       searchValue: "",
@@ -214,7 +216,7 @@ export default {
       times: normalizeDateRange([dayjs(), dayjs().add(6, "day")]),
       rowNum: 500,
       colNum: 25,
-      datas: [[]],
+      datas: [],
       dataKey: "id",
       scaleList: scaleList,
       hideHeader: false,
@@ -253,7 +255,6 @@ export default {
       "targetBlock",
       "targetRow",
       "showRowList",
-      "rawRowList",
       "showMovedBlock",
       "showDragConfirm"
     ]),
@@ -301,7 +302,6 @@ export default {
       "setCutBlock",
       "setCutRow",
       "setShowRowList",
-      "setRawRowList",
       "setShowMovedBlock",
       "setShowDragConfirm"
     ]),
@@ -314,7 +314,6 @@ export default {
     initData() {
       this.dataSeed = Date.now();
       let list = mockDatas(this.rowNum, this.colNum, this.times, this.dataSeed);
-      this.setRawRowList(list);
       this.setShowRowList([...list]);
       this.classifyData();
     },
@@ -331,116 +330,13 @@ export default {
         }
       ];
     },
-    /* Data grouping */
+    /* Data grouping by every combination of selected types and speed ranges */
     classifyData() {
-
-      function combine(arr) {
-        let result = [];
-        (function f(t, a, n) {
-          if (n === 0) return result.push(t);
-          for (let i = 0; i < a[n - 1].length; i++) {
-            f(t.concat(a[n - 1][i]), a, n - 1);
-          }
-        })([], arr, arr.length);
-        return result;
-      }
-
-      let typeList = this.selectRowTypes.length ? this.selectRowTypes : [""];
-      let speedList = this.selectSpeedTypes.length ? this.selectSpeedTypes : [""];
-      /*
-      Mix type and speed attributes
-      Example: select 2 types and 2 speed ranges, ["🚅", "🚈"] and ["0~50", "50~100"]. This generates 4 mixed groups. If both selections have 3 options, the result is 9 groups.
-     [
-        [
-          "0~50",
-          "🚅"
-        ],
-        [
-          "0~50",
-          "🚈"
-        ],
-        [
-          "50~100",
-          "🚅"
-        ],
-        [
-          "50~100",
-          "🚈"
-        ]
-    ]
-
-      */
-
-      let resultArr = combine([typeList, speedList]);
-      let classifyList = [];
-      resultArr.forEach(resultItem => {
-        // Create an empty object and assign values to build the final grouped list
-        let tempObj = {};
-        if (resultItem[0]) {
-          tempObj["speed"] = resultItem[0];
-        }
-        if (resultItem[1]) {
-          tempObj["type"] = resultItem[1];
-        }
-        if (Object.getOwnPropertyNames(tempObj).length) {
-          classifyList.push(tempObj);
-        }
-        /* Convert arrays to objects; the final result contains 4 objects like this
-          [
-            {
-              "speed": "0~50",
-              "type": "🚅"
-            },
-            {
-              "speed": "0~50",
-              "type": "🚈"
-            },
-            {
-              "speed": "50~100",
-              "type": "🚅"
-            },
-            {
-              "speed": "50~100",
-              "type": "🚈"
-            }
-          ]
-          */
-      });
-      if (!classifyList.length) {
-        this.datas = [
-          {
-            groupType: {},
-            children: [...this.showRowList],
-            isOpen: true
-          }
-        ];
-        return false;
-      }
-      let groupList = [];
-
-      /* Iterate each type object, filter matching rows, and append them to each gantt group children */
-      classifyList.forEach(classifyItem => {
-        let tempObj = Object.assign({}, classifyItem);
-        let blockRowList = this.showRowList;
-        for (let filterKey in classifyItem) {
-          blockRowList = blockRowList.filter(bridgeItem => {
-            if (filterKey === "speed") {
-              let speedLimit = classifyItem[filterKey].split("~");
-              if (speedLimit.length === 2) {
-                return bridgeItem.speed >= speedLimit[0] && bridgeItem.speed < speedLimit[1];
-              } else {
-                return bridgeItem.speed >= speedLimit[0];
-              }
-            }
-            return bridgeItem[filterKey] == classifyItem[filterKey];
-          });
-        }
-        tempObj["children"] = blockRowList;
-        tempObj["groupType"] = classifyItem;
-        tempObj["isOpen"] = true;
-        groupList.push(tempObj);
-      });
-      this.datas = groupList;
+      this.datas = groupRows(this.showRowList, this.selectRowTypes, this.selectSpeedTypes, this.datas);
+    },
+    confirmClassify() {
+      this.classifyData();
+      this.classifyDialogVisible = false;
     },
     /* Search: the first press jumps to the first match, next presses go to the next one */
     async filterSearchValue() {
@@ -479,6 +375,8 @@ export default {
       this.findList = [];
     },
     dragTask() {
+      // Nothing to do, e.g. a drop into the row the block is already in
+      if (!buildAdjustList(this).length) return;
       if (this.showDragConfirm) {
         this.checkAssign();
       } else {

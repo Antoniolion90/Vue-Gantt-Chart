@@ -10,47 +10,27 @@
         zIndex: zIndex
       }"
   >
-    <el-popover placement="bottom" :width="280" trigger="manual" :open-delay="100" v-model:visible="showDetail">
-      <template #reference>
-        <div
-          :class="['plan',{
-          'highlight':isHighlight
-        },
-        timeStatusClass,
-        cutClass,
-        movedStatusClass
-        ]"
-          @dblclick="changeZIndex"
-          @mousedown.left="showDetailInfo"
-          @mouseleave="hideDetailInfo"
-          @dragleave="hideDetailInfo"
-        >
-          <div class="runTime">
-            <span>S:{{ startToString }}</span>
-            <span>E:{{ endToString }}</span>
-          </div>
-          <div class="middle">ID{{ blockData.id }}</div>
-          <div class="passenger">{{blockData.passenger}} pax</div>
-        </div>
-      </template>
-
-      <div class="detail">
-        <ul>
-          <li>
-            <span>Departure time: </span><span>{{ startToString }}</span>
-          </li>
-          <li>
-            <span>Arrival time: </span><span>{{ endToString }}</span>
-          </li>
-          <li>
-            <span>Passenger count: </span><span>{{ blockData.passenger }}</span>
-          </li>
-          <li>
-            <span>ID：</span><span>{{ blockData.id }}</span>
-          </li>
-        </ul>
+    <div
+      ref="plan"
+      :class="['plan',{
+      'highlight':isHighlight
+    },
+    timeStatusClass,
+    cutClass,
+    movedStatusClass
+    ]"
+      @dblclick="changeZIndex"
+      @mousedown.left="showDetailInfo"
+      @mouseleave="hideDetailInfo"
+      @dragleave="hideDetailInfo"
+    >
+      <div class="runTime">
+        <span>S:{{ startToString }}</span>
+        <span>E:{{ endToString }}</span>
       </div>
-    </el-popover>
+      <div class="middle">ID{{ blockData.id }}</div>
+      <div class="passenger">{{blockData.passenger}} pax</div>
+    </div>
   </div>
 
 </template>
@@ -74,7 +54,6 @@ export default {
   },
   data() {
     return {
-      showDetail: false,
       zIndex: 2
     }
   },
@@ -137,15 +116,16 @@ export default {
     }
   },
   methods: {
+    // Details are shown in one shared popover (task-detail.vue)
     showDetailInfo() {
-      this.showDetail = true
+      this.$bus.$emit("showTaskDetail", { blockData: this.blockData, el: this.$refs.plan })
       this.$bus.$emit("updateTimeLines", {
         start: this.blockData.start,
         end: this.blockData.end
       })
     },
     hideDetailInfo() {
-      this.showDetail = false
+      this.$bus.$emit("hideTaskDetail", this.$refs.plan)
     },
     // Send this block to back; only the previously lowered block needs restoring
     changeZIndex() {
@@ -158,6 +138,8 @@ export default {
   },
   beforeUnmount() {
     if (loweredItem === this) loweredItem = null
+    // The block may be scrolled out of the render range while its details are shown
+    this.hideDetailInfo()
   }
 }
 </script>
@@ -209,47 +191,6 @@ export default {
 .highlight {
   color: #FFFFFF;
   animation: colorful 1s linear alternate infinite;
-}
-.detail {
-  //display: none;
-  -webkit-touch-callout: none; /* iOS Safari */
-  -webkit-user-select: none; /* Chrome/Safari/Opera */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
-  user-select: none; /* Non-prefixed version, currently disable mouse dragging */
-  .header {
-    text-align: center;
-    font-size: 1rem;
-  }
-}
-.detail ul {
-  list-style: none;
-  padding: 0;
-    li {
-      display: flex;
-      margin-bottom: 5px;
-      span {
-        display: inline-block;
-        color: #777777;
-        font-size: 0.8rem;
-        vertical-align: top;
-      }
-      span:first-child {
-        width: 120px;
-        text-align: right;
-        padding-right: 8px;
-        box-sizing: border-box;
-        white-space: nowrap;
-      }
-      span:last-child {
-        flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: #333;
-        text-align: left;
-      }
-    }
 }
 </style>
 

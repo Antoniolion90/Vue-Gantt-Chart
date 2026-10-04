@@ -4,12 +4,12 @@
       <v-contextmenu-item class="right-menu-item" @click="moveCurrentBlock"
       >Copy
       </v-contextmenu-item>
-      <v-contextmenu-item class="right-menu-item" @click="switchBlock"
+      <v-contextmenu-item class="right-menu-item" :disabled="!cutBlock" @click="switchBlock"
       >Swap
       </v-contextmenu-item>
     </v-contextmenu>
     <v-contextmenu ref="blockRowMenu">
-      <v-contextmenu-item class="right-menu-item" @click="pasteBlock"
+      <v-contextmenu-item class="right-menu-item" :disabled="!cutBlock" @click="pasteBlock"
       >Paste
       </v-contextmenu-item>
     </v-contextmenu>
@@ -30,16 +30,16 @@
           }"
         >
           <div class="date-control">
-            <span class="btn-date-ctrl" @click="scrollPreDay">◀</span>
+            <button type="button" class="btn-date-ctrl" aria-label="Previous day" @click="scrollPreDay">◀</button>
             <span class="current-date">{{ currentDay.format('MM-DD') }}</span>
-            <span class="btn-date-ctrl" @click="scrollNextDay">▶</span>
+            <button type="button" class="btn-date-ctrl" aria-label="Next day" @click="scrollNextDay">▶</button>
           </div>
         </div>
         <div class="gantt-header-timeline">
           <div
               ref="headerTimeline"
               class="gantt-header-timeline-container"
-              :style="{ width: totalWidth + 'px' }"
+              :style="scrollerStyle"
           >
             <timeline
                 :start="start"
@@ -105,7 +105,7 @@
                   :group-top="groupTops[index]"
                   :is-open="blockGroup.isOpen"
                   :dataKey="dataKey"
-                  :scrollTop="scrollTop"
+                  :scrollTop="renderScrollTop"
                   :totalHeight="totalHeight"
                   :heightOfBlocksWrapper="heightOfBlocksWrapper"
                   :cellHeight="cellHeight"
@@ -117,8 +117,8 @@
               </LeftBar>
             </div>
           </div>
-          <div ref="blocksWrapper" class="gantt-blocks-wrapper" id="iscroll">
-            <div class="scroller" :style="{ width: totalWidth + 'px' }">
+          <div ref="blocksWrapper" class="gantt-blocks-wrapper">
+            <div class="scroller" :style="scrollerStyle">
               <BlockGroup
                   v-for="(blockGroup, index) in datas"
                   :key="groupKeys[index]"
@@ -126,8 +126,7 @@
                   :group-index="index"
                   :group-top="groupTops[index]"
                   :is-open="blockGroup.isOpen"
-                  :scrollTop="scrollTop"
-                  :scrollLeft="scrollLeft"
+                  :scrollTop="renderScrollTop"
                   :totalHeight="totalHeight"
                   :heightOfBlocksWrapper="heightOfBlocksWrapper"
                   :cellWidth="cellWidth"
@@ -136,7 +135,7 @@
                   :startTimeOfRenderArea="startTimeOfRenderArea"
                   :endTimeOfRenderArea="endTimeOfRenderArea"
                   :preload="preload"
-                  :style="{ width: totalWidth + 'px' }"
+                  :style="scrollerStyle"
               >
                 <template v-slot:BlockRow="{ rowData, showList, style }">
                   <BlockRow
@@ -215,6 +214,9 @@ import BlockRow from "./block-row/block-row.vue";
 import MarkLine from "./mark-line/index.vue";
 import TaskItem from "@/components/demo/task-item.vue";
 import MenuItem from "@/components/demo/menu-item.vue";
+
+// Horizontal render range is rounded to this width, px
+const RENDER_CHUNK_WIDTH = 300;
 export default {
   name: "Gantt",
 
@@ -408,14 +410,26 @@ export default {
     actualHeaderHeight() {
       return this.hideHeader ? 0 : this.titleHeight;
     },
+    // Scroll positions rounded down, so children re-render only when the visible
+    // rows or the horizontal render chunk change, not on every scrolled pixel
+    renderScrollTop() {
+      const {scrollTop, cellHeight} = this;
+      return cellHeight > 0 ? Math.floor(scrollTop / cellHeight) * cellHeight : scrollTop;
+    },
+    renderScrollLeft() {
+      return Math.floor(this.scrollLeft / RENDER_CHUNK_WIDTH) * RENDER_CHUNK_WIDTH;
+    },
+    scrollerStyle() {
+      return {width: this.totalWidth + "px"};
+    },
     startTimeOfRenderArea() {
       if (this.heightOfBlocksWrapper === 0) {
         return;
       }
-      const {beginTimeOfTimeLine, scrollLeft, cellWidth, scale} = this;
+      const {beginTimeOfTimeLine, renderScrollLeft, cellWidth, scale} = this;
 
       return beginTimeOfTimeLine
-          .add((scrollLeft / cellWidth) * scale, "minute")
+          .add((renderScrollLeft / cellWidth) * scale, "minute")
           .toDate()
           .getTime();
     },
@@ -425,7 +439,7 @@ export default {
       }
       const {
         beginTimeOfTimeLine,
-        scrollLeft,
+        renderScrollLeft,
         cellWidth,
         scale,
         widthOfBlocksWrapper,
@@ -434,9 +448,11 @@ export default {
 
       const renderWidth =
           totalWidth < widthOfBlocksWrapper ? totalWidth : widthOfBlocksWrapper;
+      // One extra chunk covers the part of the viewport past the rounded scroll position
+      const right = renderScrollLeft + renderWidth + RENDER_CHUNK_WIDTH;
 
       return beginTimeOfTimeLine
-          .add(((scrollLeft + renderWidth) / cellWidth) * scale, "minute")
+          .add((right / cellWidth) * scale, "minute")
           .toDate()
           .getTime();
     },
@@ -477,7 +493,7 @@ export default {
     this.resizeObserver = new window.ResizeObserver(observeContainer);
     this.resizeObserver.observe(this.$refs.blocksWrapper);
 
-    this.scroller = new BScroll("#iscroll", {
+    this.scroller = new BScroll(this.$refs.blocksWrapper, {
       probeType: 3,
       click: true,
       scrollX: true,
@@ -503,10 +519,12 @@ export default {
 
     this.$bus.$on("scrollToPosition", this.onScrollToPosition);
     this.$bus.$on("refresh", this.onRefresh);
+    window.addEventListener("keydown", this.handleKeydown);
   },
   beforeUnmount() {
     this.$bus.$off("scrollToPosition", this.onScrollToPosition);
     this.$bus.$off("refresh", this.onRefresh);
+    window.removeEventListener("keydown", this.handleKeydown);
 
     if (this.scroller) {
       this.scroller.destroy();
@@ -645,6 +663,13 @@ export default {
       this.setTargetBlock(blockItem);
       this.setTargetRow(rowData);
       this.$bus.$emit("dragTask");
+    },
+    // Escape cancels a copied block
+    handleKeydown(event) {
+      if (event.key === "Escape" && this.cutBlock) {
+        this.setCutBlock(null);
+        this.setCutRow(null);
+      }
     },
     moveCurrentBlock() {
       this.setCutBlock(this.handleBlock);

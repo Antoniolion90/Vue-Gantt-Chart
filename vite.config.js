@@ -17,7 +17,7 @@ export default defineConfig({
     Components({
       resolvers: [
         ElementPlusResolver({
-          importStyle: false
+          importStyle: "css"
         }),
       ]
     }),

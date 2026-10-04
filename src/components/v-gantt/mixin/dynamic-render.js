@@ -129,7 +129,8 @@ const dynamicRender = {
       const groupBottom = groupTop + groupHeight;
 
       const viewportTop = scrollTop;
-      const viewportBottom = scrollTop + heightOfBlocksWrapper;
+      // scrollTop may be rounded down to a whole row, so one more row is covered at the bottom
+      const viewportBottom = scrollTop + heightOfBlocksWrapper + cellHeight;
 
       // If the group is completely outside the viewport
       if (groupBottom < viewportTop || groupTop > viewportBottom) {

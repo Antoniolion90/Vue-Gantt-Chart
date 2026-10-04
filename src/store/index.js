@@ -12,7 +12,6 @@ export default createStore({
     handleBlock: null, //Right-click action gantt block
     handleRow: null, //Right-click action gantt row
     showRowList: [], // Displayed row data after filtering
-    rawRowList: [], // Original row data for reset
     showMovedBlock: true, // Whether to show state before dragging
     showDragConfirm: false // Whether to show confirmation dialog when adjusting tasks
   },
@@ -46,9 +45,6 @@ export default createStore({
     },
     setShowRowList(state, object) {
       state.showRowList = object;
-    },
-    setRawRowList(state, object) {
-      state.rawRowList = object;
     },
     setShowMovedBlock(state, bool) {
       state.showMovedBlock = bool;

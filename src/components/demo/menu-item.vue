@@ -21,17 +21,10 @@ export default {
     ]),
     /* Filter class */
     matchClass() {
-      let filterClass = '';
-      if (this.rowData.gtArray.length) {
-        if (this.rowData.gtArray.some(blockItem => {
-          return blockItem.id.includes(this.filterBlockId)&&this.filterBlockId
-        })) {
-          filterClass = 'match-item'
-        } else {
-          filterClass = 'mismatch-item'
-        }
-      }
-      return filterClass;
+      const { filterBlockId } = this;
+      if (!filterBlockId) return '';
+      const isMatch = this.rowData.gtArray.some(blockItem => blockItem.id.includes(filterBlockId));
+      return isMatch ? 'match-item' : '';
     }
   }
 };

@@ -32,6 +32,52 @@ export function normalizeDateRange(range) {
   return [start.startOf("day").toString(), end.endOf("day").toString()];
 }
 
+function matchSpeed(speed, range) {
+  const [min, max] = range.split("~").map(Number);
+  return max === undefined ? speed >= min : speed >= min && speed < max;
+}
+
+/**
+ * Group rows by every combination of selected types and speed ranges.
+ * Groups keep their open state from the previous grouping.
+ *
+ * @export
+ * @param {Array} rows rows to group
+ * @param {string[]} types selected row types, e.g. ["🚅", "🚈"]
+ * @param {string[]} speeds selected speed ranges, e.g. ["0~50", "100"] ("100" means 100 and above)
+ * @param {Array} [prevGroups] previous groups, used to keep isOpen
+ * @returns {Array<{ groupType, children, isOpen }>} groups
+ */
+export function groupRows(rows, types, speeds, prevGroups = []) {
+  const openState = new Map(
+    prevGroups.map((group) => [JSON.stringify(group.groupType ?? {}), group.isOpen])
+  );
+  const makeGroup = (groupType, children) => ({
+    ...groupType,
+    groupType,
+    children,
+    isOpen: openState.get(JSON.stringify(groupType)) ?? true
+  });
+
+  if (!types.length && !speeds.length) {
+    return [makeGroup({}, [...rows])];
+  }
+
+  const groups = [];
+  for (const speed of speeds.length ? speeds : [null]) {
+    for (const type of types.length ? types : [null]) {
+      const groupType = {};
+      if (speed !== null) groupType.speed = speed;
+      if (type !== null) groupType.type = type;
+      const children = rows.filter(
+        (row) => (speed === null || matchSpeed(row.speed, speed)) && (type === null || row.type === type)
+      );
+      groups.push(makeGroup(groupType, children));
+    }
+  }
+  return groups;
+}
+
 /**
  * Find blocks whose id contains the search value and calculate their vertical scroll position.
  * Groups that contain matches are treated as open, since search opens them.

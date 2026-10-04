@@ -48,7 +48,6 @@ export default {
   name: "Blocks",
   mixins: [dr],
   props: {
-    scrollLeft: Number,
     cellWidth: {
       type: Number,
       required: true
