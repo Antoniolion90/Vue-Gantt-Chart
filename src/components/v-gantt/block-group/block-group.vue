@@ -9,7 +9,7 @@
       }"
       ref="wrapperElement"
     >
-    <template v-for="(rowItem, index) in showDatas">
+      <template v-for="(rowItem, index) in showDatas">
         <slot
           name="BlockRow"
           :rowData="rowItem"
@@ -64,9 +64,7 @@ export default {
       if (this.heightOfBlocksWrapper === 0) {
         return false;
       }
-      return !(
-        isUndef(this.startTimeOfRenderArea) || isUndef(this.endTimeOfRenderArea)
-      );
+      return !(isUndef(this.startTimeOfRenderArea) || isUndef(this.endTimeOfRenderArea));
     }
   },
 
@@ -84,4 +82,3 @@ export default {
   }
 };
 </script>
-

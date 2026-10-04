@@ -238,7 +238,9 @@ describe("canMoveBlock", () => {
   });
 
   it("forbids shadows of moved blocks and missing blocks", () => {
-    const shadow = block("A", "2024-03-10T13:00", "2024-03-10T14:00", "R", { movedStatus: "before" });
+    const shadow = block("A", "2024-03-10T13:00", "2024-03-10T14:00", "R", {
+      movedStatus: "before"
+    });
     expect(canMoveBlock(shadow, now)).toBe(false);
     expect(canMoveBlock(null, now)).toBe(false);
   });
@@ -276,5 +278,51 @@ describe("buildAdjustList with the current time", () => {
       ["A", "R2"],
       ["C", "R1"]
     ]);
+  });
+});
+
+describe("checkConflict overlap", () => {
+  const row = { id: "R", gtArray: [block("X", "2024-03-10T10:00", "2024-03-10T12:00", "R")] };
+  const conflicts = (start, end) =>
+    checkConflict(block("M", start, end, "Q"), row).conflictList.length;
+
+  it("detects blocks with the same time, or inside the target block", () => {
+    expect(conflicts("2024-03-10T10:00", "2024-03-10T12:00")).toBe(1);
+    expect(conflicts("2024-03-10T10:00", "2024-03-10T11:00")).toBe(1);
+    expect(conflicts("2024-03-10T10:30", "2024-03-10T11:30")).toBe(1);
+    expect(conflicts("2024-03-10T11:00", "2024-03-10T12:00")).toBe(1);
+  });
+
+  it("allows blocks touching the target block", () => {
+    expect(conflicts("2024-03-10T08:00", "2024-03-10T10:00")).toBe(0);
+    expect(conflicts("2024-03-10T12:00", "2024-03-10T13:00")).toBe(0);
+  });
+
+  it("names the conflicting block", () => {
+    const [conflict] = checkConflict(
+      block("M", "2024-03-10T11:00", "2024-03-10T13:00", "Q"),
+      row
+    ).conflictList;
+    expect(conflict.conflictBlockId).toBe("X");
+  });
+});
+
+describe("revalidateAdjust ignored conflicts", () => {
+  it("keeps a conflict ignored when its description changes", () => {
+    const rows = makeRows();
+    const adjust = checkConflict(rows[0].gtArray[0], rows[1]);
+    adjust.conflictList[0].isIgnore = true;
+    // e.g. the description is formatted in another language or time format
+    adjust.conflictList[0].conflictDesc = "changed";
+    expect(revalidateAdjust(adjust, rows)).toEqual([]);
+  });
+
+  it("does not ignore a new conflict with another block", () => {
+    const rows = makeRows();
+    const adjust = checkConflict(rows[0].gtArray[0], rows[1]);
+    adjust.conflictList[0].isIgnore = true;
+    rows[1].gtArray.push(block("N", "2024-03-10T09:00", "2024-03-10T10:30", "R2"));
+    const conflicts = revalidateAdjust(adjust, rows);
+    expect(conflicts.map((item) => item.conflictBlockId)).toEqual(["N"]);
   });
 });

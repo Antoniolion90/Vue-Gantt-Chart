@@ -21,9 +21,7 @@
           </div>
         </template>
         <template v-else>
-          <div class="classify-tag">
-            All
-          </div>
+          <div class="classify-tag">All</div>
         </template>
       </div>
       <button
@@ -89,4 +87,3 @@ export default {
   }
 };
 </script>
-

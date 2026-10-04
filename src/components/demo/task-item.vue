@@ -3,22 +3,24 @@
     class="gantt-block-item"
     :draggable="canDrag"
     :style="{
-        'margin-top': 0.1 * cellHeight + 'px',
-        height: '80%',
-        left: positionOffset + 'px',
-        width: blockWidth + 'px',
-        zIndex: zIndex
-      }"
+      'margin-top': 0.1 * cellHeight + 'px',
+      height: '80%',
+      left: positionOffset + 'px',
+      width: blockWidth + 'px',
+      zIndex: zIndex
+    }"
   >
     <div
       ref="plan"
-      :class="['plan',{
-      'highlight':isHighlight
-    },
-    timeStatusClass,
-    cutClass,
-    movedStatusClass
-    ]"
+      :class="[
+        'plan',
+        {
+          highlight: isHighlight
+        },
+        timeStatusClass,
+        cutClass,
+        movedStatusClass
+      ]"
       @dblclick="changeZIndex"
       @mousedown.left="showDetailInfo"
       @mouseleave="hideDetailInfo"
@@ -30,23 +32,22 @@
         <span>E:{{ endToString }}</span>
       </div>
       <div class="middle" v-if="detailLevel !== 'none'">ID{{ blockData.id }}</div>
-      <div class="passenger" v-if="detailLevel === 'full'">{{blockData.passenger}} pax</div>
+      <div class="passenger" v-if="detailLevel === 'full'">{{ blockData.passenger }} pax</div>
     </div>
   </div>
-
 </template>
 
 <script>
-import { mapState } from "vuex"
-import dayjs from "dayjs"
-import { canMoveBlock } from "@/utils/tool.js"
+import { mapState } from "vuex";
+import dayjs from "dayjs";
+import { canMoveBlock } from "@/utils/tool.js";
 
 // Minimal block widths for all details and for the id only, px
-const FULL_DETAIL_WIDTH = 130
-const ID_DETAIL_WIDTH = 60
+const FULL_DETAIL_WIDTH = 130;
+const ID_DETAIL_WIDTH = 60;
 
 // Block currently sent to back by double click
-let loweredItem = null
+let loweredItem = null;
 
 export default {
   name: "task-item",
@@ -63,101 +64,98 @@ export default {
   data() {
     return {
       zIndex: 2
-    }
+    };
   },
   computed: {
-    ...mapState([
-      "filterBlockId",
-      "cutBlock",
-    ]),
+    ...mapState(["filterBlockId", "cutBlock"]),
     canDrag() {
       // Draggable only if not moved yet and not in progress/completed
-      return canMoveBlock(this.blockData, this.currentTime)
+      return canMoveBlock(this.blockData, this.currentTime);
     },
     positionOffset() {
-      const { blockData } = this
-      return this.getPositionOffset(blockData.start)
+      const { blockData } = this;
+      return this.getPositionOffset(blockData.start);
     },
     blockWidth() {
-      const { blockData } = this
-      return this.getWidthAbout2Times(blockData.start, blockData.end)
+      const { blockData } = this;
+      return this.getWidthAbout2Times(blockData.start, blockData.end);
     },
     isHighlight() {
-      if (!this.filterBlockId) return false
-      return this.blockData.id.includes(this.filterBlockId)
+      if (!this.filterBlockId) return false;
+      return this.blockData.id.includes(this.filterBlockId);
     },
     // How much text fits into the block
     detailLevel() {
-      if (this.blockWidth >= FULL_DETAIL_WIDTH) return "full"
-      if (this.blockWidth >= ID_DETAIL_WIDTH) return "id"
-      return "none"
+      if (this.blockWidth >= FULL_DETAIL_WIDTH) return "full";
+      if (this.blockWidth >= ID_DETAIL_WIDTH) return "id";
+      return "none";
     },
     timeFormat() {
       // A cell of a day scale covers whole days, so the time alone is ambiguous
-      return this.scale >= 1440 ? "MM-DD HH:mm" : "HH:mm"
+      return this.scale >= 1440 ? "MM-DD HH:mm" : "HH:mm";
     },
     startToString() {
-      return dayjs(this.blockData.start).format(this.timeFormat)
+      return dayjs(this.blockData.start).format(this.timeFormat);
     },
     endToString() {
-      return dayjs(this.blockData.end).format(this.timeFormat)
+      return dayjs(this.blockData.end).format(this.timeFormat);
     },
     cutClass() {
-      const isCutBlock = this.cutBlock ? this.cutBlock.id === this.blockData.id : false
+      const isCutBlock = this.cutBlock ? this.cutBlock.id === this.blockData.id : false;
       if (isCutBlock) {
-        return 'cut'
+        return "cut";
       }
-      return ''
+      return "";
     },
     timeStatusClass() {
-      let { blockData, currentTime } = this
-      let start = dayjs(blockData.start)
-      let end = dayjs(blockData.end)
+      let { blockData, currentTime } = this;
+      let start = dayjs(blockData.start);
+      let end = dayjs(blockData.end);
       if (start.isBefore(currentTime) && end.isAfter(currentTime)) {
-        return "NOW_PLAN" // NOW
+        return "NOW_PLAN"; // NOW
       } else if (end.isBefore(currentTime)) {
-        return "PAST_PLAN" // PAST
+        return "PAST_PLAN"; // PAST
       } else {
-        return "FURTHER_PLAN" // Future
+        return "FURTHER_PLAN"; // Future
       }
     },
     movedStatusClass() {
-      let statusClassStr = ""
+      let statusClassStr = "";
       if (this.blockData.movedStatus === "before") {
-        statusClassStr += "moved-before "
+        statusClassStr += "moved-before ";
       } else if (this.blockData.movedStatus === "after") {
-        statusClassStr += "moved-after "
+        statusClassStr += "moved-after ";
       }
-      return statusClassStr
+      return statusClassStr;
     }
   },
   methods: {
     // Details are shown in one shared popover (task-detail.vue)
     showDetailInfo() {
-      this.$bus.$emit("showTaskDetail", { blockData: this.blockData, el: this.$refs.plan })
+      this.$bus.$emit("showTaskDetail", { blockData: this.blockData, el: this.$refs.plan });
       this.$bus.$emit("updateTimeLines", {
         start: this.blockData.start,
         end: this.blockData.end
-      })
+      });
     },
     hideDetailInfo() {
-      this.$bus.$emit("hideTaskDetail", this.$refs.plan)
+      this.$bus.$emit("hideTaskDetail", this.$refs.plan);
     },
     // Send this block to back; only the previously lowered block needs restoring
     changeZIndex() {
       if (loweredItem && loweredItem !== this) {
-        loweredItem.zIndex = 2
+        loweredItem.zIndex = 2;
       }
-      loweredItem = this
-      this.zIndex = 1
-    },
+      loweredItem = this;
+      this.zIndex = 1;
+    }
   },
   beforeUnmount() {
-    if (loweredItem === this) loweredItem = null
+    if (loweredItem === this) loweredItem = null;
     // The block may be scrolled out of the render range while its details are shown
-    this.hideDetailInfo()
+    this.hideDetailInfo();
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -171,7 +169,8 @@ export default {
   flex-direction: column;
   flex-shrink: 0;
 }
-.middle, .passenger {
+.middle,
+.passenger {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -187,38 +186,53 @@ export default {
   height: 100%;
   // Text never leaves the block, even if a narrow block shows some of it
   overflow: hidden;
-  border: 1px solid #CCCCCC;
+  border: 1px solid #cccccc;
   border-radius: 10px;
   color: #333333;
   padding-left: 5px;
   font-size: 0.8rem;
   &.cut {
-    border-color: #FF3F3E;
-    opacity: .6;
+    border-color: #ff3f3e;
+    opacity: 0.6;
   }
   &.NOW_PLAN {
-    background-color: #D5F8EA;
+    background-color: #d5f8ea;
   }
   &.PAST_PLAN {
-    background-color: #F2F2F2;
+    background-color: #f2f2f2;
   }
   &.FURTHER_PLAN {
-    background-color: #BFF2FE;
+    background-color: #bff2fe;
   }
   &.moved-before {
-    background-color: #FFFFFF;
-    background-image: linear-gradient(135deg, #EEEEEE 25%, rgba(#000, .1) 0, rgba(#000, .1) 50%, #EEEEEE 0, #EEEEEE 75%, rgba(#000, .1) 0);
+    background-color: #ffffff;
+    background-image: linear-gradient(
+      135deg,
+      #eeeeee 25%,
+      rgba(#000, 0.1) 0,
+      rgba(#000, 0.1) 50%,
+      #eeeeee 0,
+      #eeeeee 75%,
+      rgba(#000, 0.1) 0
+    );
     background-size: 10px 10px;
   }
   &.moved-after {
-    background-image: linear-gradient(135deg, rgba(#3693b3, .5) 25%, transparent 0, transparent 50%, rgba(#3693b3, .5) 0, rgba(#3693b3, .5) 75%, transparent 0);
+    background-image: linear-gradient(
+      135deg,
+      rgba(#3693b3, 0.5) 25%,
+      transparent 0,
+      transparent 50%,
+      rgba(#3693b3, 0.5) 0,
+      rgba(#3693b3, 0.5) 75%,
+      transparent 0
+    );
     background-size: 10px 10px;
   }
   // opacity: 0.8;
 }
 .highlight {
-  color: #FFFFFF;
+  color: #ffffff;
   animation: colorful 1s linear alternate infinite;
 }
 </style>
-

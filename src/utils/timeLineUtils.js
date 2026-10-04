@@ -1,23 +1,4 @@
-export const scaleList = [
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  10,
-  12,
-  15,
-  20,
-  30,
-  60,
-  120,
-  180,
-  240,
-  360,
-  720,
-  1440
-];
+export const scaleList = [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 360, 720, 1440];
 
 export const MINUTE_OF_ONE_DAY = 60 * 24;
 
@@ -96,5 +77,3 @@ export function calcScalesAbout2Times(timeStart, timeEnd, scale = 60) {
   // Count of scale steps k >= 0 that satisfy begin + k * scale <= end
   return diff < 0 ? 0 : Math.floor(diff / (scale * 60 * 1000)) + 1;
 }
-
-

@@ -8,23 +8,23 @@
 </template>
 
 <script>
-import {mapState} from 'vuex'
+import { mapState } from "vuex";
 
 export default {
   name: "TestLeft",
   props: {
     rowData: Object
   },
-  computed:{
-    ...mapState([
-      'filterBlockId',
-    ]),
+  computed: {
+    ...mapState(["filterBlockId"]),
     /* Filter class */
     matchClass() {
       const { filterBlockId } = this;
-      if (!filterBlockId) return '';
-      const isMatch = this.rowData.gtArray.some(blockItem => blockItem.id.includes(filterBlockId));
-      return isMatch ? 'match-item' : '';
+      if (!filterBlockId) return "";
+      const isMatch = this.rowData.gtArray.some((blockItem) =>
+        blockItem.id.includes(filterBlockId)
+      );
+      return isMatch ? "match-item" : "";
     }
   }
 };
@@ -41,7 +41,7 @@ export default {
   border-radius: 8px 0 0 8px;
   align-items: center;
 }
-.match-item{
+.match-item {
   color: #ffffff;
   opacity: 0.7;
   animation: colorful 1s linear alternate infinite;
@@ -58,4 +58,3 @@ export default {
   font-size: 1.2rem;
 }
 </style>
-

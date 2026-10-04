@@ -111,7 +111,10 @@ export async function setViewOptions(page, { scaleLabel, rowHeight }) {
   await page.getByRole("button", { name: "Settings" }).click();
   const form = page.locator(".gantt-config-options").filter({ visible: true });
   if (scaleLabel) {
-    await form.locator(".el-form-item", { hasText: "Minutes per scale" }).locator(".el-select").click();
+    await form
+      .locator(".el-form-item", { hasText: "Minutes per scale" })
+      .locator(".el-select")
+      .click();
     await page
       .locator(".el-select-dropdown__item")
       .filter({ visible: true })

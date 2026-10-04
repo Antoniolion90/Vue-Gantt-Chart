@@ -5,86 +5,79 @@
       <div class="operation-box">
         <span class="form-title">Time:</span>
         <el-date-picker
-            :id="['start-time', 'end-time']"
-            v-model="timeRange"
-            :clearable="false"
-            type="daterange"
-            start-placeholder="Start date"
-            end-placeholder="End date"
-            class="time-picker"
+          :id="['start-time', 'end-time']"
+          v-model="timeRange"
+          :clearable="false"
+          type="daterange"
+          start-placeholder="Start date"
+          end-placeholder="End date"
+          class="time-picker"
         >
         </el-date-picker>
         <span class="form-title">Rows:</span>
         <el-input-number
-            v-model="rowNum"
-            :min="1"
-            :max="5000"
-            :step="100"
-            controls-position="right"
-            value-on-clear="min"
-            class="num-input"
+          v-model="rowNum"
+          :min="1"
+          :max="5000"
+          :step="100"
+          controls-position="right"
+          value-on-clear="min"
+          class="num-input"
         />
         <span class="form-title">Columns:</span>
         <el-input-number
-            v-model="colNum"
-            :min="1"
-            :max="200"
-            controls-position="right"
-            value-on-clear="min"
-            class="num-input"
+          v-model="colNum"
+          :min="1"
+          :max="200"
+          controls-position="right"
+          value-on-clear="min"
+          class="num-input"
         />
         <el-button type="primary" @click="initData">Generate</el-button>
         <el-input
-            v-model="searchValue"
-            placeholder="ID"
-            aria-label="Search ID"
-            clearable
-            class="id-input"
-            @clear="clearSearch"
+          v-model="searchValue"
+          placeholder="ID"
+          aria-label="Search ID"
+          clearable
+          class="id-input"
+          @clear="clearSearch"
         />
-        <el-button type="primary" @click="filterSearchValue">Search
+        <el-button type="primary" @click="filterSearchValue"
+          >Search
           <template v-if="findList.length">
             {{ `${currentFindIndex + 1}/${findList.length}` }}
           </template>
         </el-button>
-        <el-button type="primary" @click="classifyDialogVisible=true">Grouping</el-button>
+        <el-button type="primary" @click="classifyDialogVisible = true">Grouping</el-button>
       </div>
-      <el-popover
-          placement="right"
-          width="400"
-          trigger="click">
+      <el-popover placement="right" width="400" trigger="click">
         <div class="gantt-config-options">
           <el-form :inline="true" size="small">
             <el-form-item label="Row height">
               <el-input-number
-                  v-model="cellHeight"
-                  :min="20"
-                  :max="100"
-                  style="width:100px"
-                  size="small"
+                v-model="cellHeight"
+                :min="20"
+                :max="100"
+                style="width: 100px"
+                size="small"
               ></el-input-number>
             </el-form-item>
             <el-form-item label="Scale width">
               <el-input-number
-                  v-model="cellWidth"
-                  :min="20"
-                  :max="100"
-                  style="width:100px"
-                  size="small"
+                v-model="cellWidth"
+                :min="20"
+                :max="100"
+                style="width: 100px"
+                size="small"
               ></el-input-number>
             </el-form-item>
             <el-form-item label="Minutes per scale">
-              <el-select
-                  v-model="scale"
-                  placeholder=""
-                  style="width:100px"
-                  size="small"
-              >
+              <el-select v-model="scale" placeholder="" style="width: 100px" size="small">
                 <el-option
-                    v-for="item in scaleList"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
+                  v-for="item in scaleList"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
                 >
                 </el-option>
               </el-select>
@@ -93,108 +86,92 @@
               <el-checkbox v-model="hideHeader">Hide header</el-checkbox>
             </el-form-item>
             <el-form-item>
-              <el-checkbox :model-value="showMovedBlock" @change="setShowMovedBlock" title="Show the task state before dragging. If enabled, it is shown as a black shadow.">
+              <el-checkbox
+                :model-value="showMovedBlock"
+                @change="setShowMovedBlock"
+                title="Show the task state before dragging. If enabled, it is shown as a black shadow."
+              >
                 Show pre-adjust task
               </el-checkbox>
             </el-form-item>
             <el-form-item>
-              <el-checkbox :model-value="showDragConfirm" @change="setShowDragConfirm" title="Show confirmation dialog when adjusting task">Show adjustment confirmation dialog
+              <el-checkbox
+                :model-value="showDragConfirm"
+                @change="setShowDragConfirm"
+                title="Show confirmation dialog when adjusting task"
+                >Show adjustment confirmation dialog
               </el-checkbox>
             </el-form-item>
           </el-form>
-
         </div>
         <template #reference>
-          <el-button type="primary" style="margin-left: 10px;">Settings</el-button>
+          <el-button type="primary" style="margin-left: 10px">Settings</el-button>
         </template>
       </el-popover>
-
     </div>
     <div class="page-body">
       <v-gantt-chart
-          :currentTime="currentTime"
-          :startTime="times[0]"
-          :endTime="times[1]"
-          :cellWidth="cellWidth"
-          :cellHeight="cellHeight"
-          :timeLines="timeLines"
-          :titleHeight="titleHeight"
-          :scale="scale"
-          :titleWidth="titleWidth"
-          showCurrentTime
-          :hideHeader="hideHeader"
-          :dataKey="dataKey"
-          :datas="datas"
+        :currentTime="currentTime"
+        :startTime="times[0]"
+        :endTime="times[1]"
+        :cellWidth="cellWidth"
+        :cellHeight="cellHeight"
+        :timeLines="timeLines"
+        :titleHeight="titleHeight"
+        :scale="scale"
+        :titleWidth="titleWidth"
+        showCurrentTime
+        :hideHeader="hideHeader"
+        :dataKey="dataKey"
+        :datas="datas"
       >
       </v-gantt-chart>
       <task-detail />
-
     </div>
-    <el-dialog
-        title="Data grouping"
-        v-model="classifyDialogVisible">
+    <el-dialog title="Data grouping" v-model="classifyDialogVisible">
       <el-form class="classify-form">
         <el-form-item label="Type:">
           <el-checkbox-group v-model="selectRowTypes">
-            <el-checkbox
-                v-for="(rowType,index) in rowTypes"
-                :key="index"
-                :value="rowType">{{ rowType }}
+            <el-checkbox v-for="(rowType, index) in rowTypes" :key="index" :value="rowType"
+              >{{ rowType }}
             </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         <el-form-item label="Speed:">
           <el-checkbox-group v-model="selectSpeedTypes">
-            <el-checkbox
-                v-for="(speed,index) in speedTypes"
-                :key="index"
-                :value="speed">{{ speed }}
+            <el-checkbox v-for="(speed, index) in speedTypes" :key="index" :value="speed"
+              >{{ speed }}
             </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
       </el-form>
-      <div style="text-align: right;padding-top: 25px;">
+      <div style="text-align: right; padding-top: 25px">
         <el-button @click="classifyDialogVisible = false">Cancel</el-button>
         <el-button type="primary" @click="confirmClassify">Confirm</el-button>
       </div>
     </el-dialog>
-    <el-dialog
-        title="Task adjustment"
-        v-model="checkDialogVisible"
-        width="1000px">
-
-      <check-adjust :request-id="checkRequestId" @closeDialog="checkDialogVisible=false"/>
-
+    <el-dialog title="Task adjustment" v-model="checkDialogVisible" width="1000px">
+      <check-adjust :request-id="checkRequestId" @closeDialog="checkDialogVisible = false" />
     </el-dialog>
   </div>
 </template>
 
 <script>
 import dayjs from "dayjs";
-import {buildAdjustList, applyAdjustList} from "@/utils/tool.js";
-import {mapMutations, mapState} from "vuex";
-import {defineAsyncComponent, markRaw} from "vue";
+import { buildAdjustList, applyAdjustList } from "@/utils/tool.js";
+import { mapMutations, mapState } from "vuex";
+import { defineAsyncComponent, markRaw } from "vue";
 import TaskDetail from "./components/demo/task-detail.vue";
-import {normalizeDateRange, findBlocks, getTimeOffset, groupRows} from "@/utils/demoUtils.js";
-import {mockDatas} from "@/api/mock-data";
+import {
+  normalizeDateRange,
+  findBlocks,
+  getScaleOptions,
+  getTimeOffset,
+  groupRows
+} from "@/utils/demoUtils.js";
+import { mockDatas } from "@/api/mock-data";
 
-const scaleList = `1,2,3,4,5,6,10,12,15,20,30,60,120,180,240,360,720,1440,2880,4320`
-    .split(",")
-    .map(n => {
-      let value = parseInt(n);
-      let label;
-      if (value < 60) {
-        label = value + "minute";
-      } else if (value >= 60 && value < 1440) {
-        label = value / 60 + "hour";
-      } else {
-        label = value / 1440 + "day";
-      }
-      return {
-        value,
-        label
-      };
-    });
+const scaleList = getScaleOptions();
 export default {
   name: "App",
   components: {
@@ -207,15 +184,11 @@ export default {
       searchValue: "",
       timeLines: [
         {
-          time: dayjs()
-              .add(2, "hour")
-              .toString(),
+          time: dayjs().add(2, "hour").toString(),
           text: "~~"
         },
         {
-          time: dayjs()
-              .add(5, "hour")
-              .toString(),
+          time: dayjs().add(5, "hour").toString(),
           text: "try",
           color: "#747E80"
         }
@@ -343,9 +316,14 @@ export default {
     },
     /* Data grouping by every combination of selected types and speed ranges */
     classifyData() {
-      const groups = groupRows(this.showRowList, this.selectRowTypes, this.selectSpeedTypes, this.datas);
+      const groups = groupRows(
+        this.showRowList,
+        this.selectRowTypes,
+        this.selectSpeedTypes,
+        this.datas
+      );
       // Rows are replaced, never mutated, so they do not need deep reactivity
-      groups.forEach(group => {
+      groups.forEach((group) => {
         group.children = markRaw(group.children);
       });
       this.datas = groups;
@@ -357,46 +335,47 @@ export default {
     /* Search: the first press jumps to the first match, next presses go to the next one */
     async filterSearchValue() {
       if (!this.searchValue) {
-        this.$message.warning('ID cannot be empty~');
+        this.$message.warning("ID cannot be empty~");
         return false;
       }
       // Positions are recalculated on every press, since groups may be toggled or data changed
-      const {matches, groupIndexes} = findBlocks(this.datas, this.searchValue, this.cellHeight);
+      const { matches, groupIndexes } = findBlocks(this.datas, this.searchValue, this.cellHeight);
       if (!matches.length) {
-        this.$message.warning('No results found~');
+        this.$message.warning("No results found~");
         this.findList = [];
         this.currentFindIndex = 0;
         return false;
       }
       this.currentFindIndex = this.findList.length
-          ? (this.currentFindIndex + 1) % matches.length
-          : 0;
+        ? (this.currentFindIndex + 1) % matches.length
+        : 0;
       this.findList = markRaw(matches);
-      groupIndexes.forEach(index => {
+      groupIndexes.forEach((index) => {
         this.datas[index].isOpen = true;
       });
       this.setFilterBlockId(this.searchValue);
 
       // Wait until opened groups are rendered, so the scroll range is up to date
       await this.$nextTick();
-      const {block, y} = matches[this.currentFindIndex];
+      const { block, y } = matches[this.currentFindIndex];
       this.$bus.$emit("scrollToPosition", {
         x: -this.getTimeOffset(block.start),
         y: -y
       });
     },
     clearSearch() {
-      this.setFilterBlockId('');
+      this.setFilterBlockId("");
       this.currentFindIndex = 0;
       this.findList = [];
     },
     dragTask() {
+      const adjustList = buildAdjustList(this, dayjs());
       // Nothing to do, e.g. a drop into the row the block is already in
-      if (!buildAdjustList(this, dayjs()).length) return;
+      if (!adjustList.length) return;
       if (this.showDragConfirm) {
         this.checkAssign();
       } else {
-        this.dragBlock();
+        this.dragBlock(adjustList);
       }
     },
     checkAssign() {
@@ -404,11 +383,9 @@ export default {
       // The dialog recalculates conflicts when the request id changes
       this.checkRequestId += 1;
     },
-    dragBlock() {
-      let adjustList = buildAdjustList(this, dayjs());
-
+    dragBlock(adjustList) {
       // Check whether conflicts exist
-      let hasConflict = adjustList.some(adjustObj => {
+      let hasConflict = adjustList.some((adjustObj) => {
         return adjustObj.conflictList.length > 0;
       });
       if (hasConflict) {
@@ -422,9 +399,6 @@ export default {
     toggleGroupOpen(index) {
       this.datas[index].isOpen = !this.datas[index].isOpen;
     }
-
   }
 };
 </script>
-
-

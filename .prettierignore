@@ -3,3 +3,6 @@ node_modules
 package-lock.json
 components.d.ts
 screenshot
+coverage
+test-results
+playwright-report

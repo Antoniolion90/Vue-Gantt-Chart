@@ -22,7 +22,7 @@ export function isDef(v) {
 }
 
 export function warn(str) {
-  console.warn(str)
+  console.warn(str);
 }
 
 export function noop() {}
@@ -33,7 +33,7 @@ export function throttle(fn) {
   let lastArgs = null;
   let lastContext = null;
 
-  return function() {
+  return function () {
     lastArgs = arguments;
     lastContext = this;
 
@@ -70,11 +70,8 @@ export function checkConflict(blockItem, row, targetBlockItem) {
     let compareBlock = blockList[i];
     let compareBlockStart = dayjs(compareBlock.start).valueOf();
     let compareBlockEnd = dayjs(compareBlock.end).valueOf();
-    if (
-      (compareBlockStart < blockStart && blockStart < compareBlockEnd) || // Current block start is within target block (overlap exists)
-      (compareBlockStart < blockEnd && blockEnd < compareBlockEnd) || // Current block end is within target block (overlap exists)
-      (compareBlockStart >= blockStart && blockEnd >= compareBlockEnd) // Target block is fully within current block time range (subset)
-    ) {
+    // Intervals overlap; adjacent blocks (one ends when the other starts) do not
+    if (blockStart < compareBlockEnd && compareBlockStart < blockEnd) {
       let timeConflictStr = `${currentBlock.id}:(${convertTimeStr(
         currentBlock.start
       )}-${convertTimeStr(currentBlock.end)}) with target: ${
@@ -85,6 +82,8 @@ export function checkConflict(blockItem, row, targetBlockItem) {
 
       conflictList.push({
         conflictType: "Time validation conflict",
+        // Block the moved block conflicts with; identifies the conflict on revalidation
+        conflictBlockId: compareBlock.id,
         conflictDesc: timeConflictStr,
         isIgnore: false
       });
@@ -151,15 +150,15 @@ export function buildAdjustList({ currentBlock, currentRow, targetBlock, targetR
 export function revalidateAdjust(adjustItem, rows) {
   const targetRow = rows.find((row) => row.id === adjustItem.targetRowId);
   if (!targetRow) return [];
-  const ignored = new Set(
-    adjustItem.conflictList.filter((item) => item.isIgnore).map((item) => item.conflictDesc)
-  );
+  // A conflict is identified by its type and the conflicting block, not by its text
+  const conflictKey = (item) => `${item.conflictType}\u0000${item.conflictBlockId}`;
+  const ignored = new Set(adjustItem.conflictList.filter((item) => item.isIgnore).map(conflictKey));
   const { conflictList } = checkConflict(
     adjustItem.blockItem,
     targetRow,
     adjustItem.targetBlockItem
   );
-  return conflictList.filter((item) => !ignored.has(item.conflictDesc));
+  return conflictList.filter((item) => !ignored.has(conflictKey(item)));
 }
 
 /**

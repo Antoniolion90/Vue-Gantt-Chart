@@ -15,7 +15,8 @@ export default [
       ecmaVersion: "latest",
       sourceType: "module",
       globals: {
-        ...globals.browser
+        ...globals.browser,
+        __VERSION__: "readonly"
       }
     },
     rules: {

@@ -30,10 +30,12 @@ npm run dev:host # the same, also reachable from the local network
 npm run build    # production build into dist/
 npm run preview  # preview the production build
 npm test         # unit tests (Vitest)
+npm run test:coverage # unit tests with a coverage report in coverage/
 npm run test:e2e # end-to-end tests (Playwright; run `npx playwright install chromium` once)
                  # E2E_TARGET=preview npm run test:e2e tests the production build
 npm run lint     # ESLint
 npm run format   # Prettier
+npm run format:check # check formatting without changing files (runs in CI)
 ```
 
 ## Project structure
@@ -70,23 +72,23 @@ The component is registered globally as `v-gantt-chart`:
 
 ### Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `startTime` | date-like | now | Start of the timeline |
-| `endTime` | date-like | now | End of the timeline |
-| `currentTime` | Day.js | now | Time used to mark tasks as past / current / future |
-| `datas` | Array | `[]` | Groups of rows, see [Data format](#data-format) |
-| `dataKey` | String | — | Row field used as a key in the left bar |
-| `cellWidth` | Number | `50` | Width of one scale cell, px |
-| `cellHeight` | Number | `20` | Row height, px |
-| `titleHeight` | Number | `40` | Header height, px |
-| `titleWidth` | Number | `200` | Left bar width, px |
-| `scale` | Number | `60` | Minutes per cell: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 360, 720 or a multiple of 1440 |
-| `showCurrentTime` | Boolean | `false` | Show the current-time mark line |
-| `timeLines` | Array | — | Extra mark lines: `{ time, color? }` |
-| `hideHeader` | Boolean | `false` | Hide the timeline header |
-| `timeRangeCorrection` | Boolean | `true` | Extend the end time when the range is narrower than the viewport |
-| `preload` | Number | `1` | Rows rendered above and below the viewport; `0` renders all rows |
+| Prop                  | Type      | Default | Description                                                                                               |
+| --------------------- | --------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `startTime`           | date-like | now     | Start of the timeline                                                                                     |
+| `endTime`             | date-like | now     | End of the timeline                                                                                       |
+| `currentTime`         | Day.js    | now     | Time used to mark tasks as past / current / future                                                        |
+| `datas`               | Array     | `[]`    | Groups of rows, see [Data format](#data-format)                                                           |
+| `dataKey`             | String    | —       | Row field used as a key in the left bar                                                                   |
+| `cellWidth`           | Number    | `50`    | Width of one scale cell, px                                                                               |
+| `cellHeight`          | Number    | `20`    | Row height, px                                                                                            |
+| `titleHeight`         | Number    | `40`    | Header height, px                                                                                         |
+| `titleWidth`          | Number    | `200`   | Left bar width, px                                                                                        |
+| `scale`               | Number    | `60`    | Minutes per cell: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 360, 720 or a multiple of 1440 |
+| `showCurrentTime`     | Boolean   | `false` | Show the current-time mark line                                                                           |
+| `timeLines`           | Array     | —       | Extra mark lines: `{ time, color? }`                                                                      |
+| `hideHeader`          | Boolean   | `false` | Hide the timeline header                                                                                  |
+| `timeRangeCorrection` | Boolean   | `true`  | Extend the end time when the range is narrower than the viewport                                          |
+| `preload`             | Number    | `1`     | Rows rendered above and below the viewport; `0` renders all rows                                          |
 
 ### Slots
 
@@ -102,7 +104,7 @@ The component is registered globally as `v-gantt-chart`:
   {
     "groupType": { "type": "🚄", "speed": "50~100" },
     "isOpen": true,
-    "children": [ /* rows */ ]
+    "children": [/* rows */]
   }
 ]
 ```

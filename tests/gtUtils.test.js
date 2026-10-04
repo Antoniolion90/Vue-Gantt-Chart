@@ -39,7 +39,12 @@ describe("getPositionOffset", () => {
 
 describe("assignLabelLevels", () => {
   it("keeps separate labels on the top level", () => {
-    expect(assignLabelLevels([{ x: 0, width: 50 }, { x: 60, width: 50 }])).toEqual([0, 0]);
+    expect(
+      assignLabelLevels([
+        { x: 0, width: 50 },
+        { x: 60, width: 50 }
+      ])
+    ).toEqual([0, 0]);
   });
 
   it("stacks overlapping labels", () => {
@@ -63,5 +68,17 @@ describe("assignLabelLevels", () => {
 
   it("handles no labels", () => {
     expect(assignLabelLevels([])).toEqual([]);
+  });
+});
+
+describe("parse cache", () => {
+  it("stays correct after many different times", () => {
+    const begin = "2024-03-10T00:00:00";
+    for (let minute = 0; minute < 12000; minute++) {
+      const time = new Date(Date.UTC(2024, 2, 10) + minute * 60000).toISOString();
+      getPositionOffset(time, begin, options);
+    }
+    expect(getPositionOffset("2024-03-10T02:00:00", begin, options)).toBe(100);
+    expect(getWidthAbout2Times("2024-03-10T02:00:00", "2024-03-10T03:00:00", options)).toBe(50);
   });
 });

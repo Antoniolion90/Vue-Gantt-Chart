@@ -1,6 +1,26 @@
 import dayjs from "dayjs";
 import { getPositionOffset } from "./gtUtils.js";
-import { getBeginTimeOfTimeLine } from "./timeLineUtils.js";
+import { getBeginTimeOfTimeLine, MINUTE_OF_ONE_DAY, scaleList } from "./timeLineUtils.js";
+
+/**
+ * Scale options for the settings select: the scales the gantt supports, plus a few day scales
+ *
+ * @export
+ * @param {number} [days=3] largest day scale, in days
+ * @returns {Array<{value:number,label:string}>}
+ */
+export function getScaleOptions(days = 3) {
+  const values = [...scaleList];
+  for (let day = 2; day <= days; day++) values.push(day * MINUTE_OF_ONE_DAY);
+  const unit = (count, name) => `${count} ${name}${count === 1 ? "" : "s"}`;
+  return values.map((value) => {
+    let label;
+    if (value < 60) label = unit(value, "minute");
+    else if (value < MINUTE_OF_ONE_DAY) label = unit(value / 60, "hour");
+    else label = unit(value / MINUTE_OF_ONE_DAY, "day");
+    return { value, label };
+  });
+}
 
 /**
  * Horizontal offset of a time in the gantt. The timeline starts at the start time
@@ -70,7 +90,8 @@ export function groupRows(rows, types, speeds, prevGroups = []) {
       if (speed !== null) groupType.speed = speed;
       if (type !== null) groupType.type = type;
       const children = rows.filter(
-        (row) => (speed === null || matchSpeed(row.speed, speed)) && (type === null || row.type === type)
+        (row) =>
+          (speed === null || matchSpeed(row.speed, speed)) && (type === null || row.type === type)
       );
       groups.push(makeGroup(groupType, children));
     }

@@ -13,19 +13,11 @@
         :key="index"
       >
         <slot :day="day" :getTimeScales="getTimeScales">
-          <div class="gantt-timeline-day " :style="heightStyle">
+          <div class="gantt-timeline-day" :style="heightStyle">
             {{ day.format("MM/DD") }}
           </div>
-          <div
-            v-if="!isDayScale"
-            class="gantt-timeline-scale "
-            :style="heightStyle"
-          >
-            <div
-              :style="cellWidthStyle"
-              v-for="(time, index) in getTimeScales(day)"
-              :key="index"
-            >
+          <div v-if="!isDayScale" class="gantt-timeline-scale" :style="heightStyle">
+            <div :style="cellWidthStyle" v-for="(time, index) in getTimeScales(day)" :key="index">
               {{ scale >= 60 ? time.format("HH") : time.format("HH:mm") }}
             </div>
           </div>
@@ -45,11 +37,7 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isBetween);
 
-import {
-  isDayScale,
-  MINUTE_OF_ONE_DAY,
-  getBeginTimeOfTimeLine
-} from "@/utils/timeLineUtils.js";
+import { isDayScale, MINUTE_OF_ONE_DAY, getBeginTimeOfTimeLine } from "@/utils/timeLineUtils.js";
 
 function isSameDay(one, two) {
   return one.isSame(two, "day");
@@ -101,10 +89,7 @@ export default {
       const temp = allDayBlocks.find((day) => {
         if (
           scale >= MINUTE_OF_ONE_DAY &&
-          startDayOfRenderArea.isBetween(
-            day,
-            day.add(scale / MINUTE_OF_ONE_DAY, "day")
-          )
+          startDayOfRenderArea.isBetween(day, day.add(scale / MINUTE_OF_ONE_DAY, "day"))
         ) {
           return true;
         } else {
@@ -129,8 +114,7 @@ export default {
       const temp = [];
       let { start, end, scale, isDayScale } = this;
       let tempStart = start.clone().startOf("day");
-      let addNum =
-        isDayScale && scale > MINUTE_OF_ONE_DAY ? scale / MINUTE_OF_ONE_DAY : 1;
+      let addNum = isDayScale && scale > MINUTE_OF_ONE_DAY ? scale / MINUTE_OF_ONE_DAY : 1;
       while (tempStart.isSameOrBefore(end)) {
         temp.push(tempStart);
         tempStart = tempStart.add(addNum, "day");
@@ -164,10 +148,7 @@ export default {
       const { startDayOfRenderArea, endDayOfRenderArea, scale } = this;
       if (
         scale >= MINUTE_OF_ONE_DAY &&
-        startDayOfRenderArea.isBetween(
-          day,
-          day.add(scale / MINUTE_OF_ONE_DAY, "day")
-        )
+        startDayOfRenderArea.isBetween(day, day.add(scale / MINUTE_OF_ONE_DAY, "day"))
       ) {
         return true;
       } else return !!isSameOrBetween(startDayOfRenderArea, endDayOfRenderArea, day);
@@ -219,4 +200,3 @@ export default {
   }
 };
 </script>
-

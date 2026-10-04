@@ -2,44 +2,32 @@
   <div class="check-container">
     <div class="left-check">
       <el-table
-          ref="singleTable"
-          :data="adjustList"
-          tooltip-effect="dark"
-          style="width: 100%"
-          highlight-current-row
-          @current-change="handleCurrentChange"
-          @selection-change="handleSelectionChange">
+        ref="singleTable"
+        :data="adjustList"
+        tooltip-effect="dark"
+        style="width: 100%"
+        highlight-current-row
+        @current-change="handleCurrentChange"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" align="center" width="55"> </el-table-column>
         <el-table-column
-            type="selection"
-            align="center"
-            width="55"
+          :label="'Selected (' + tableSelection.length + '/' + adjustList.length + ')'"
         >
-        </el-table-column>
-        <el-table-column
-            :label="'Selected ('+ tableSelection.length+'/'+ adjustList.length+')'">
           <template #default="scope">
-            <el-tag :type="scope.row.conflictList.length===0?'success':'danger'">
+            <el-tag :type="scope.row.conflictList.length === 0 ? 'success' : 'danger'">
               {{ scope.row.conflictList.length === 0 ? "No conflict" : "Has conflict" }}
             </el-tag>
             {{ scope.row.blockId }}
           </template>
         </el-table-column>
-        <el-table-column
-            label="Action type"
-            width="80"
-            align="center">
+        <el-table-column label="Action type" width="80" align="center">
           <template #default="scope">{{ scope.row.adjustType }}</template>
         </el-table-column>
-        <el-table-column
-            label="Target"
-            width="80"
-            align="center">
+        <el-table-column label="Target" width="80" align="center">
           <template #default="scope">{{ scope.row.targetRowId }}</template>
         </el-table-column>
-        <el-table-column
-            label="Validation result"
-            width="80"
-            align="center">
+        <el-table-column label="Validation result" width="80" align="center">
           <template #default="scope">{{ scope.row.conflictList.length }}</template>
         </el-table-column>
       </el-table>
@@ -47,39 +35,50 @@
     <div class="right-check" v-if="selectRow">
       <div class="terms-info clearfix">
         Conflict list({{ selectRow.conflictList.length }})
-        <el-button type="primary" class="conflict-btn" @click="ignoreConflictAll">Ignore all</el-button>
-        <el-button type="primary" class="conflict-btn" @click="checkAdjustResult">Revalidate</el-button>
+        <el-button type="primary" class="conflict-btn" @click="ignoreConflictAll"
+          >Ignore all</el-button
+        >
+        <el-button type="primary" class="conflict-btn" @click="checkAdjustResult"
+          >Revalidate</el-button
+        >
       </div>
       <div class="terms-list">
-        <el-scrollbar class="modify-scroll" style="height:100%">
-          <div class="term-item" v-for="(conflictItem,index) in selectRow.conflictList" :key="index">
+        <el-scrollbar class="modify-scroll" style="height: 100%">
+          <div
+            class="term-item"
+            v-for="(conflictItem, index) in selectRow.conflictList"
+            :key="index"
+          >
             <h3 class="conflict-title">{{ index + 1 + "." + conflictItem.conflictType }}</h3>
             <p class="conflict-desc">{{ conflictItem.conflictDesc }}</p>
 
-            <el-button :disabled="conflictItem.isIgnore" class="btn-ignore" type="primary"
-                       @click="ignoreConflictItem(conflictItem)">{{ conflictItem.isIgnore ? "Ignored" : "Ignore" }}
+            <el-button
+              :disabled="conflictItem.isIgnore"
+              class="btn-ignore"
+              type="primary"
+              @click="ignoreConflictItem(conflictItem)"
+              >{{ conflictItem.isIgnore ? "Ignored" : "Ignore" }}
             </el-button>
           </div>
         </el-scrollbar>
-
       </div>
 
       <div class="check-result-info clearfix">
-        <el-tag :type="selectRow.conflictList.length===0?'success':'danger'">
+        <el-tag :type="selectRow.conflictList.length === 0 ? 'success' : 'danger'">
           {{ selectRow.conflictList.length === 0 ? "Validation passed" : "Validation failed" }}
         </el-tag>
-        <el-button type="primary" class="btn-check" @click="checkAndInsert">Confirm adjustment</el-button>
-
-
+        <el-button type="primary" class="btn-check" @click="checkAndInsert"
+          >Confirm adjustment</el-button
+        >
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import {mapState, mapMutations} from "vuex";
+import { mapState, mapMutations } from "vuex";
 import dayjs from "dayjs";
-import {buildAdjustList, applyAdjustList, revalidateAdjust} from "@/utils/tool.js";
+import { buildAdjustList, applyAdjustList, revalidateAdjust } from "@/utils/tool.js";
 
 export default {
   name: "checkAdjust",
@@ -117,13 +116,8 @@ export default {
     ])
   },
   methods: {
-    ...mapMutations([
-      "setShowRowList",
-      "setCutBlock",
-      "setCutRow"
-    ]),
+    ...mapMutations(["setShowRowList", "setCutBlock", "setCutRow"]),
     calcConflictList() {
-
       this.selectRow = null;
       this.adjustList = buildAdjustList(this, dayjs());
 
@@ -145,7 +139,7 @@ export default {
     },
     ignoreConflictAll() {
       if (this.selectRow) {
-        this.selectRow.conflictList.map(conflictItem => {
+        this.selectRow.conflictList.map((conflictItem) => {
           conflictItem.isIgnore = true;
         });
       }
@@ -156,7 +150,7 @@ export default {
         return;
       }
       // Check the selected adjustments again; ignored conflicts are dropped
-      this.tableSelection.forEach(adjustObj => {
+      this.tableSelection.forEach((adjustObj) => {
         adjustObj.conflictList = revalidateAdjust(adjustObj, this.showRowList);
       });
     },
@@ -166,14 +160,16 @@ export default {
         return false;
       }
       /* Check whether conflicts exist */
-      let hasConflict = this.tableSelection.some(adjustObj => {
+      let hasConflict = this.tableSelection.some((adjustObj) => {
         return adjustObj.conflictList.length > 0;
       });
       if (hasConflict) {
         this.$message.error("Task adjustment has time conflicts, please review!");
         return false;
       } else {
-        this.setShowRowList(applyAdjustList(this.showRowList, this.tableSelection, this.showMovedBlock));
+        this.setShowRowList(
+          applyAdjustList(this.showRowList, this.tableSelection, this.showMovedBlock)
+        );
         // The cut block is placed now, so it can not be pasted again
         this.setCutBlock(null);
         this.setCutRow(null);
@@ -185,13 +181,12 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 .check-container {
   display: flex;
   .left-check {
     width: 450px;
     padding-right: 10px;
-    border-right: 2px solid #DDDDDD;
+    border-right: 2px solid #dddddd;
   }
   .right-check {
     flex: 1;
@@ -216,8 +211,8 @@ export default {
     .term-item {
       padding: 10px 120px 10px 10px;
       position: relative;
-      &:nth-child(2n+1) {
-        background-color: #F4F4F4;
+      &:nth-child(2n + 1) {
+        background-color: #f4f4f4;
       }
     }
     .conflict-title {
@@ -243,7 +238,4 @@ export default {
     }
   }
 }
-
 </style>
-
-

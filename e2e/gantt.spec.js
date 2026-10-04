@@ -224,7 +224,7 @@ test.describe("demo controls", () => {
 
 test.describe("view settings", () => {
   test("block text stays inside blocks on a large scale", async ({ page }) => {
-    await setViewOptions(page, { scaleLabel: "6hour" });
+    await setViewOptions(page, { scaleLabel: "6 hours" });
     const outside = await page.evaluate(() => {
       const result = [];
       for (const plan of document.querySelectorAll(".gantt-block-item .plan")) {
@@ -243,7 +243,7 @@ test.describe("view settings", () => {
   });
 
   test("labels of close time lines do not overlap", async ({ page }) => {
-    await setViewOptions(page, { scaleLabel: "6hour" });
+    await setViewOptions(page, { scaleLabel: "6 hours" });
     const overlaps = await page.evaluate(() => {
       const rects = [...document.querySelectorAll(".gantt-markline-label")].map((el) =>
         el.getBoundingClientRect()
@@ -275,7 +275,7 @@ test.describe("view settings", () => {
     }, center);
     expect(blockId).toBeTruthy();
 
-    await setViewOptions(page, { scaleLabel: "30minute" });
+    await setViewOptions(page, { scaleLabel: "30 minutes" });
     const rect = await page.locator(`[data-block-id="${blockId}"]`).boundingBox();
     expect(rect.x).toBeLessThan(center.x + 2);
     expect(rect.x + rect.width).toBeGreaterThan(center.x - 2);

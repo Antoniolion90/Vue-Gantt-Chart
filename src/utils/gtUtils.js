@@ -1,23 +1,16 @@
 // import dayjs from 'dayjs' // dayjs is more compatible, but much slower (roughly 30x slower in earlier tests).
 
-// Cache parsed values for a small speedup
+// Cache the last parsed value per name for a small speedup: only a few names are used,
+// so the cache does not grow
+const cacheParseTime = (function () {
+  const cacheString = {};
+  const cacheValue = {};
 
-const cacheParseTime = (function() {
-  let cacheString = {};
-  let cacheValue = {};
-  let count = 0;
-
-  return function(timeName, timeString) {
+  return function (timeName, timeString) {
     if (cacheString[timeName] !== timeString) {
-      // Avoid caching too many objects
-      if (count++ > 10000) {
-        cacheString = {};
-        cacheValue = {};
-      }
       cacheString[timeName] = timeString;
-      return (cacheValue[timeName] = parseTime(timeString));
+      cacheValue[timeName] = parseTime(timeString);
     }
-
     return cacheValue[timeName];
   };
 })();
@@ -54,10 +47,7 @@ export function getWidthAbout2Times(start, end, arg) {
 export function getPositionOffset(time, beginTimeOfTimeLine, arg) {
   const { scale, cellWidth } = arg;
   const pTime = cacheParseTime("pStart", time);
-  const pBeginTimeOfTimeLine = cacheParseTime(
-    "pBeginTimeOfTimeLine",
-    beginTimeOfTimeLine
-  );
+  const pBeginTimeOfTimeLine = cacheParseTime("pBeginTimeOfTimeLine", beginTimeOfTimeLine);
   return (diffTimeByMinutes(pBeginTimeOfTimeLine, pTime) / scale) * cellWidth;
 }
 
@@ -83,7 +73,6 @@ function diffTimeByMinutes(start, end) {
 // function diffTimeByMinutes(start,end){
 //   return end.diff(start, "m", true)
 // }
-
 
 /**
  * Stack overlapping labels: each label gets the lowest level where it does not overlap

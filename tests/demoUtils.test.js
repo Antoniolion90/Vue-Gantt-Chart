@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import dayjs from "dayjs";
-import { findBlocks, getTimeOffset, groupRows, normalizeDateRange } from "@/utils/demoUtils.js";
+import {
+  findBlocks,
+  getScaleOptions,
+  getTimeOffset,
+  groupRows,
+  normalizeDateRange
+} from "@/utils/demoUtils.js";
+import { validateScale } from "@/utils/timeLineUtils.js";
 
 describe("normalizeDateRange", () => {
   it("covers whole first and last days", () => {
@@ -137,5 +144,22 @@ describe("groupRows", () => {
     first[0].isOpen = false;
     const second = groupRows(rows, ["🚅", "🚈"], [], first);
     expect(second.map((g) => g.isOpen)).toEqual([false, true]);
+  });
+});
+
+describe("getScaleOptions", () => {
+  it("labels scales with units", () => {
+    const labels = Object.fromEntries(getScaleOptions().map((o) => [o.value, o.label]));
+    expect(labels[1]).toBe("1 minute");
+    expect(labels[30]).toBe("30 minutes");
+    expect(labels[60]).toBe("1 hour");
+    expect(labels[360]).toBe("6 hours");
+    expect(labels[1440]).toBe("1 day");
+    expect(labels[4320]).toBe("3 days");
+  });
+
+  it("only offers scales the gantt accepts", () => {
+    const values = getScaleOptions().map((o) => o.value);
+    values.forEach((value) => expect(() => validateScale(value)).not.toThrow());
   });
 });

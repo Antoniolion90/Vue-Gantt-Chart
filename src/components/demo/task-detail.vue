@@ -28,8 +28,8 @@
 </template>
 
 <script>
-import { markRaw } from "vue"
-import dayjs from "dayjs"
+import { markRaw } from "vue";
+import dayjs from "dayjs";
 
 export default {
   name: "task-detail",
@@ -37,30 +37,30 @@ export default {
     return {
       blockData: null,
       reference: null
-    }
+    };
   },
   mounted() {
-    this.$bus.$on("showTaskDetail", this.show)
-    this.$bus.$on("hideTaskDetail", this.hide)
+    this.$bus.$on("showTaskDetail", this.show);
+    this.$bus.$on("hideTaskDetail", this.hide);
   },
   beforeUnmount() {
-    this.$bus.$off("showTaskDetail", this.show)
-    this.$bus.$off("hideTaskDetail", this.hide)
+    this.$bus.$off("showTaskDetail", this.show);
+    this.$bus.$off("hideTaskDetail", this.hide);
   },
   methods: {
     show({ blockData, el }) {
-      this.reference = markRaw(el)
-      this.blockData = blockData
+      this.reference = markRaw(el);
+      this.blockData = blockData;
     },
     // Hide only if the details belong to the given block element
     hide(el) {
-      if (el === this.reference) this.blockData = null
+      if (el === this.reference) this.blockData = null;
     },
     formatTime(time) {
-      return dayjs(time).format("MM-DD HH:mm")
+      return dayjs(time).format("MM-DD HH:mm");
     }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>

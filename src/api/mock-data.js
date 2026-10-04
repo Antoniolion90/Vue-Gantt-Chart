@@ -7,9 +7,10 @@ const colorList = [
   "(83, 186, 241)",
   "(208, 142, 231)"
 ];
-const nameList = "Hope,SwiftWing,Lightbringer,Scout,PowerGod,Officer,LightningMeteor,Doctor,ThunderFireGod,Sniper,LightOfHope,SouthSeaNinja,RapidE3,MountainGod,SafetyGuard,Hammer,Longevity,Star,Romanska,Desire,ThunderLightning,FireRescue,EuroStar".split(
-  ","
-);
+const nameList =
+  "Hope,SwiftWing,Lightbringer,Scout,PowerGod,Officer,LightningMeteor,Doctor,ThunderFireGod,Sniper,LightOfHope,SouthSeaNinja,RapidE3,MountainGod,SafetyGuard,Hammer,Longevity,Star,Romanska,Desire,ThunderLightning,FireRescue,EuroStar".split(
+    ","
+  );
 
 const typeList = "🚅,🚈,🚄".split(",");
 
@@ -27,8 +28,8 @@ function generateRow(index, colNum, times) {
   let tempEnd = dayjs(times[0]);
 
   for (let i = 0; i < colNum; i++) {
-    tempStart = tempEnd.add((index + i) % 6 + 1, "hour");
-    tempEnd = tempStart.add((index + i) % 5 + 2, "hour");
+    tempStart = tempEnd.add(((index + i) % 6) + 1, "hour");
+    tempEnd = tempStart.add(((index + i) % 5) + 2, "hour");
     // Blocks past the end of the range would never be visible
     if (tempEnd.isAfter(rangeEnd)) break;
     gtArray.push({
@@ -62,4 +63,3 @@ export function mockDatas(nums, col, t, seed = 0) {
   }
   return datas;
 }
-

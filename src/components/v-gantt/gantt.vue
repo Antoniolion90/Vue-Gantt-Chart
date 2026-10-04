@@ -1,118 +1,130 @@
 <template>
   <div class="gantt-chart">
     <v-contextmenu ref="blockItemMenu">
-      <v-contextmenu-item class="right-menu-item" :disabled="!canMoveHandleBlock" @click="moveCurrentBlock"
-      >Cut
+      <v-contextmenu-item
+        class="right-menu-item"
+        :disabled="!canMoveHandleBlock"
+        @click="moveCurrentBlock"
+        >Cut
       </v-contextmenu-item>
-      <v-contextmenu-item class="right-menu-item" :disabled="!cutBlock || !canMoveHandleBlock" @click="switchBlock"
-      >Swap
+      <v-contextmenu-item
+        class="right-menu-item"
+        :disabled="!cutBlock || !canMoveHandleBlock"
+        @click="switchBlock"
+        >Swap
       </v-contextmenu-item>
     </v-contextmenu>
     <v-contextmenu ref="blockRowMenu">
       <v-contextmenu-item class="right-menu-item" :disabled="!cutBlock" @click="pasteBlock"
-      >Paste
+        >Paste
       </v-contextmenu-item>
     </v-contextmenu>
     <div
-        class="gantt-container"
-        :style="{
+      class="gantt-container"
+      :style="{
         height: `100%`,
         width: `100%`
       }"
     >
       <div v-show="!hideHeader" class="gantt-header" :style="{ width: `100%` }">
         <div
-            class="gantt-header-title"
-            :style="{
+          class="gantt-header-title"
+          :style="{
             'line-height': titleHeight + 'px',
             height: titleHeight + 'px',
             width: titleWidth + 'px'
           }"
         >
           <div class="date-control">
-            <button type="button" class="btn-date-ctrl" aria-label="Previous day" @click="scrollPreDay">◀</button>
-            <span class="current-date">{{ currentDay.format('MM-DD') }}</span>
-            <button type="button" class="btn-date-ctrl" aria-label="Next day" @click="scrollNextDay">▶</button>
+            <button
+              type="button"
+              class="btn-date-ctrl"
+              aria-label="Previous day"
+              @click="scrollPreDay"
+            >
+              ◀
+            </button>
+            <span class="current-date">{{ currentDay.format("MM-DD") }}</span>
+            <button
+              type="button"
+              class="btn-date-ctrl"
+              aria-label="Next day"
+              @click="scrollNextDay"
+            >
+              ▶
+            </button>
           </div>
         </div>
         <div class="gantt-header-timeline">
-          <div
-              ref="headerTimeline"
-              class="gantt-header-timeline-container"
-              :style="scrollerStyle"
-          >
+          <div ref="headerTimeline" class="gantt-header-timeline-container" :style="scrollerStyle">
             <timeline
-                :start="start"
-                :end="end"
-                :cellWidth="cellWidth"
-                :titleHeight="titleHeight"
-                :scale="scale"
-                :startTimeOfRenderArea="startDayjsOfRenderArea"
-                :endTimeOfRenderArea="endDayjsOfRenderArea"
-                :getPositionOffset="getPositionOffset"
+              :start="start"
+              :end="end"
+              :cellWidth="cellWidth"
+              :titleHeight="titleHeight"
+              :scale="scale"
+              :startTimeOfRenderArea="startDayjsOfRenderArea"
+              :endTimeOfRenderArea="endDayjsOfRenderArea"
+              :getPositionOffset="getPositionOffset"
             >
               <template v-slot="{ day, getTimeScales }">
-                <slot name="timeline" :day="day" :getTimeScales="getTimeScales">
-                </slot>
+                <slot name="timeline" :day="day" :getTimeScales="getTimeScales"> </slot>
               </template>
             </timeline>
           </div>
         </div>
       </div>
 
-      <div
-          class="gantt-body"
-          :style="{ height: `calc(100% - ${actualHeaderHeight}px)` }"
-      >
+      <div class="gantt-body" :style="{ height: `calc(100% - ${actualHeaderHeight}px)` }">
         <div class="gantt-table">
           <div
-              ref="marklineArea"
-              :style="{ marginLeft: titleWidth + 'px' }"
-              class="gantt-markline-area"
+            ref="marklineArea"
+            :style="{ marginLeft: titleWidth + 'px' }"
+            class="gantt-markline-area"
           >
             <CurrentTime
-                v-if="showCurrentTime"
-                :getPositionOffset="getPositionOffset"
-                :level="markLineLevels[0]"
+              v-if="showCurrentTime"
+              :getPositionOffset="getPositionOffset"
+              :level="markLineLevels[0]"
             />
             <mark-line
-                v-for="(timeConfig, index) in timeLines"
-                :key="index"
-                :timeConfig="timeConfig"
-                :getPositionOffset="getPositionOffset"
-                :level="markLineLevels[index + 1]"
+              v-for="(timeConfig, index) in timeLines"
+              :key="index"
+              :timeConfig="timeConfig"
+              :getPositionOffset="getPositionOffset"
+              :level="markLineLevels[index + 1]"
             >
               <template v-slot="{ timeConfig, getPosition, level }">
                 <slot
-                    name="markLine"
-                    :timeConfig="timeConfig"
-                    :getPosition="getPosition"
-                    :level="level"
+                  name="markLine"
+                  :timeConfig="timeConfig"
+                  :getPosition="getPosition"
+                  :level="level"
                 ></slot>
               </template>
             </mark-line>
           </div>
           <div
-              class="gantt-leftbar-container"
-              :style="{
+            class="gantt-leftbar-container"
+            :style="{
               width: titleWidth + 'px'
             }"
           >
             <div class="left-scroll-wrapper" ref="leftbarWrapper">
               <LeftBar
-                  v-for="(blockGroup, index) in datas"
-                  :key="groupKeys[index]"
-                  :datas="blockGroup.children || []"
-                  :groupType="blockGroup.groupType || {}"
-                  :group-index="index"
-                  :group-top="groupTops[index]"
-                  :is-open="blockGroup.isOpen"
-                  :dataKey="dataKey"
-                  :scrollTop="renderScrollTop"
-                  :totalHeight="totalHeight"
-                  :heightOfBlocksWrapper="heightOfBlocksWrapper"
-                  :cellHeight="cellHeight"
-                  :preload="preload"
+                v-for="(blockGroup, index) in datas"
+                :key="groupKeys[index]"
+                :datas="blockGroup.children || []"
+                :groupType="blockGroup.groupType || {}"
+                :group-index="index"
+                :group-top="groupTops[index]"
+                :is-open="blockGroup.isOpen"
+                :dataKey="dataKey"
+                :scrollTop="renderScrollTop"
+                :totalHeight="totalHeight"
+                :heightOfBlocksWrapper="heightOfBlocksWrapper"
+                :cellHeight="cellHeight"
+                :preload="preload"
               >
                 <template v-slot="{ rowData }">
                   <MenuItem :rowData="rowData"></MenuItem>
@@ -123,60 +135,54 @@
           <div ref="blocksWrapper" class="gantt-blocks-wrapper">
             <div class="scroller" :style="scrollerStyle">
               <BlockGroup
-                  v-for="(blockGroup, index) in datas"
-                  :key="groupKeys[index]"
-                  :datas="blockGroup.children || []"
-                  :group-index="index"
-                  :group-top="groupTops[index]"
-                  :is-open="blockGroup.isOpen"
-                  :scrollTop="renderScrollTop"
-                  :totalHeight="totalHeight"
-                  :heightOfBlocksWrapper="heightOfBlocksWrapper"
-                  :cellWidth="cellWidth"
-                  :cellHeight="cellHeight"
-                  :scale="scale"
-                  :startTimeOfRenderArea="startTimeOfRenderArea"
-                  :endTimeOfRenderArea="endTimeOfRenderArea"
-                  :preload="preload"
-                  :style="scrollerStyle"
+                v-for="(blockGroup, index) in datas"
+                :key="groupKeys[index]"
+                :datas="blockGroup.children || []"
+                :group-index="index"
+                :group-top="groupTops[index]"
+                :is-open="blockGroup.isOpen"
+                :scrollTop="renderScrollTop"
+                :totalHeight="totalHeight"
+                :heightOfBlocksWrapper="heightOfBlocksWrapper"
+                :cellWidth="cellWidth"
+                :cellHeight="cellHeight"
+                :scale="scale"
+                :startTimeOfRenderArea="startTimeOfRenderArea"
+                :endTimeOfRenderArea="endTimeOfRenderArea"
+                :preload="preload"
+                :style="scrollerStyle"
               >
                 <template v-slot:BlockRow="{ rowData, showList, style }">
                   <BlockRow
-                      v-contextmenu:blockRowMenu
-                      :cellHeight="cellHeight"
-                      :key="rowData.id"
-                      :data-row-id="rowData.id"
-                      :rowData="rowData"
-                      :showList="showList"
-                      :style="style"
-                      @dragover.prevent
-                      @drop="dropToRow($event, rowData)"
-                      @mousedown.right.stop="
-                      handleRightClickRow($event, rowData)
-                    "
+                    v-contextmenu:blockRowMenu
+                    :cellHeight="cellHeight"
+                    :key="rowData.id"
+                    :data-row-id="rowData.id"
+                    :rowData="rowData"
+                    :showList="showList"
+                    :style="style"
+                    @dragover.prevent
+                    @drop="dropToRow($event, rowData)"
+                    @mousedown.right.stop="handleRightClickRow($event, rowData)"
                   >
                     <template v-slot:blockItem="{ blockData }">
                       <TaskItem
-                          v-contextmenu:blockItemMenu
-                          :getPositionOffset="getPositionOffset"
-                          :getWidthAbout2Times="getWidthAbout2Times"
-                          :currentTime="currentTime"
-                          :cellHeight="cellHeight"
-                          :scale="scale"
-                          :key="blockData.id"
-                          :data-block-id="blockData.id"
-                          :blockData="blockData"
-                          @dragover.prevent
-                          @dragstart="handleDragStart($event, rowData, blockData)"
-                          @drop.stop="handleDropOnBlock($event, rowData, blockData)"
-                          @pointerdown.stop
-                          @contextmenu.stop
-                          @mousedown.left.stop="
-                          handleLeftClickBlock($event, rowData, blockData)
-                        "
-                          @mousedown.right.stop="
-                          handleRightClickBlock($event, rowData, blockData)
-                        "
+                        v-contextmenu:blockItemMenu
+                        :getPositionOffset="getPositionOffset"
+                        :getWidthAbout2Times="getWidthAbout2Times"
+                        :currentTime="currentTime"
+                        :cellHeight="cellHeight"
+                        :scale="scale"
+                        :key="blockData.id"
+                        :data-block-id="blockData.id"
+                        :blockData="blockData"
+                        @dragover.prevent
+                        @dragstart="handleDragStart($event, rowData, blockData)"
+                        @drop.stop="handleDropOnBlock($event, rowData, blockData)"
+                        @pointerdown.stop
+                        @contextmenu.stop
+                        @mousedown.left.stop="handleLeftClickBlock($event, rowData, blockData)"
+                        @mousedown.right.stop="handleRightClickBlock($event, rowData, blockData)"
                       />
                     </template>
                   </BlockRow>
@@ -191,7 +197,7 @@
 </template>
 
 <script>
-import {mapState, mapMutations} from "vuex";
+import { mapState, mapMutations } from "vuex";
 import dayjs from "dayjs";
 import BScroll from "@better-scroll/core";
 import MouseWheel from "@better-scroll/mouse-wheel";
@@ -206,7 +212,7 @@ import {
   isDayScale,
   scaleList
 } from "@/utils/timeLineUtils.js";
-import {throttle, warn, canMoveBlock} from "@/utils/tool.js";
+import { throttle, warn, canMoveBlock } from "@/utils/tool.js";
 import {
   getPositionOffset as _getPositionOffset,
   getWidthAbout2Times as _getWidthAbout2Times,
@@ -215,7 +221,7 @@ import {
 
 import Timeline from "./time-line/index.vue";
 import CurrentTime from "./mark-line/current-time.vue";
-import {estimateLabelWidth} from "./mark-line/labels.js";
+import { estimateLabelWidth } from "./mark-line/labels.js";
 import LeftBar from "./left-bar/index.vue";
 import BlockGroup from "./block-group/block-group.vue";
 import BlockRow from "./block-row/block-row.vue";
@@ -352,47 +358,38 @@ export default {
       return dayjs(this.startTime);
     },
     end() {
-      const {
-        start,
-        widthOfBlocksWrapper,
-        scale,
-        cellWidth,
-        timeRangeCorrection
-      } = this;
+      const { start, widthOfBlocksWrapper, scale, cellWidth, timeRangeCorrection } = this;
       let end = dayjs(this.endTime);
       const totalWidth = calcScalesAbout2Times(start, end, scale) * cellWidth;
       // Time correction and compensation
-      if (
-          timeRangeCorrection &&
-          (start.isAfter(end) || totalWidth <= widthOfBlocksWrapper)
-      ) {
+      if (timeRangeCorrection && (start.isAfter(end) || totalWidth <= widthOfBlocksWrapper)) {
         end = getBeginTimeOfTimeLine(start, scale).add(
-            (widthOfBlocksWrapper / cellWidth) * scale,
-            "minute"
+          (widthOfBlocksWrapper / cellWidth) * scale,
+          "minute"
         );
       }
       return end;
     },
     totalWidth() {
-      const {cellWidth, totalScales} = this;
+      const { cellWidth, totalScales } = this;
       return cellWidth * totalScales;
     },
     totalScales() {
-      const {start, end, scale} = this;
+      const { start, end, scale } = this;
       return calcScalesAbout2Times(start, end, scale);
     },
     totalHeight() {
-      const {datas, cellHeight} = this;
+      const { datas, cellHeight } = this;
       let height = 0;
       for (let i = 0; i < datas.length; i++) {
-        let rowLength = datas[i].isOpen ? datas[i].children.length + 1 : 1;
+        const rowLength = datas[i].isOpen ? (datas[i].children?.length || 0) + 1 : 1;
         height += rowLength * cellHeight;
       }
       return height;
     },
     // Offset of each group from the top of the chart
     groupTops() {
-      const {datas, cellHeight} = this;
+      const { datas, cellHeight } = this;
       const tops = [];
       let top = 0;
       for (let i = 0; i < datas.length; i++) {
@@ -424,25 +421,25 @@ export default {
     // Scroll positions rounded down, so children re-render only when the visible
     // rows or the horizontal render chunk change, not on every scrolled pixel
     renderScrollTop() {
-      const {scrollTop, cellHeight} = this;
+      const { scrollTop, cellHeight } = this;
       return cellHeight > 0 ? Math.floor(scrollTop / cellHeight) * cellHeight : scrollTop;
     },
     renderScrollLeft() {
       return Math.floor(this.scrollLeft / RENDER_CHUNK_WIDTH) * RENDER_CHUNK_WIDTH;
     },
     scrollerStyle() {
-      return {width: this.totalWidth + "px"};
+      return { width: this.totalWidth + "px" };
     },
     startTimeOfRenderArea() {
       if (this.heightOfBlocksWrapper === 0) {
         return;
       }
-      const {beginTimeOfTimeLine, renderScrollLeft, cellWidth, scale} = this;
+      const { beginTimeOfTimeLine, renderScrollLeft, cellWidth, scale } = this;
 
       return beginTimeOfTimeLine
-          .add((renderScrollLeft / cellWidth) * scale, "minute")
-          .toDate()
-          .getTime();
+        .add((renderScrollLeft / cellWidth) * scale, "minute")
+        .toDate()
+        .getTime();
     },
     endTimeOfRenderArea() {
       if (this.heightOfBlocksWrapper === 0) {
@@ -457,27 +454,23 @@ export default {
         totalWidth
       } = this;
 
-      const renderWidth =
-          totalWidth < widthOfBlocksWrapper ? totalWidth : widthOfBlocksWrapper;
+      const renderWidth = totalWidth < widthOfBlocksWrapper ? totalWidth : widthOfBlocksWrapper;
       // One extra chunk covers the part of the viewport past the rounded scroll position
       const right = renderScrollLeft + renderWidth + RENDER_CHUNK_WIDTH;
 
       return beginTimeOfTimeLine
-          .add((right / cellWidth) * scale, "minute")
-          .toDate()
-          .getTime();
+        .add((right / cellWidth) * scale, "minute")
+        .toDate()
+        .getTime();
     },
     // Time at the left edge of the viewport, shown in the header
     currentDay() {
-      const {beginTimeOfTimeLine, scrollLeft, cellWidth, scale} = this;
+      const { beginTimeOfTimeLine, scrollLeft, cellWidth, scale } = this;
       return beginTimeOfTimeLine.add((scrollLeft / cellWidth) * scale, "minute");
     },
     // Label levels of the current time line (first) and the time lines, so labels do not overlap
     markLineLevels() {
-      const lines = [
-        {time: this.currentTime, text: ""},
-        ...(this.timeLines || [])
-      ];
+      const lines = [{ time: this.currentTime, text: "" }, ...(this.timeLines || [])];
       return assignLabelLevels(
         lines.map((line) => ({
           x: line.time == null ? -Infinity : this.getPositionOffset(dayjs(line.time).toString()),
@@ -524,8 +517,8 @@ export default {
       (_, [oldScale, oldCellWidth]) => {
         const half = this.widthOfBlocksWrapper / 2;
         const centerTime = getBeginTimeOfTimeLine(this.start, oldScale).add(
-            ((this.scrollLeft + half) / oldCellWidth) * oldScale,
-            "minute"
+          ((this.scrollLeft + half) / oldCellWidth) * oldScale,
+          "minute"
         );
         this.$nextTick(() => {
           this.scroller?.refresh();
@@ -649,11 +642,7 @@ export default {
         cellWidth: this.cellWidth
       };
 
-      return _getPositionOffset(
-          date,
-          this.beginTimeOfTimeLineToString,
-          options
-      );
+      return _getPositionOffset(date, this.beginTimeOfTimeLineToString, options);
     },
     // Cache nodes
     cacheSelector() {
@@ -738,4 +727,3 @@ export default {
 <style lang="scss">
 @use "gantt";
 </style>
-
