@@ -38,9 +38,6 @@ export default defineConfig({
             if (id.includes('element-plus')) {
               return 'element-plus';
             }
-            if (id.includes('@faker-js')) {
-              return 'faker';
-            }
             if (id.includes('lodash')) {
               return 'lodash';
             }

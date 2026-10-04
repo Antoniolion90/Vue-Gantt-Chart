@@ -24,9 +24,16 @@ export default {
     };
   },
   mounted() {
+    let lastMinute = dayjs().startOf("minute").valueOf();
     this.timer = setInterval(() => {
-      this.currentTime = dayjs().toString();
-      this.$bus.$emit("updateCurrentTime", dayjs());
+      const now = dayjs();
+      this.currentTime = now.toString();
+      // Task statuses only need minute precision, so notify listeners once per minute
+      const minute = now.startOf("minute").valueOf();
+      if (minute !== lastMinute) {
+        lastMinute = minute;
+        this.$bus.$emit("updateCurrentTime", now);
+      }
     }, 1000);
   },
   beforeUnmount() {

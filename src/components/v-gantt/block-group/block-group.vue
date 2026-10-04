@@ -27,15 +27,28 @@
 import dr from "../mixin/dynamic-render.js";
 import { isUndef } from "@/utils/tool.js";
 
+// Parsed start/end of each block, so they are not re-parsed on every scroll
+const timeCache = new WeakMap();
+
+function getBlockTimes(item) {
+  let cached = timeCache.get(item);
+  if (!cached || cached.start !== item.start || cached.end !== item.end) {
+    cached = {
+      start: item.start,
+      end: item.end,
+      startMs: new Date(item.start).getTime(),
+      endMs: new Date(item.end).getTime()
+    };
+    timeCache.set(item, cached);
+  }
+  return cached;
+}
+
 export default {
   name: "Blocks",
   mixins: [dr],
   props: {
     scrollLeft: Number,
-    unVisibleHeight: {
-      type: Number,
-      required: true
-    },
     cellWidth: {
       type: Number,
       required: true
@@ -65,12 +78,8 @@ export default {
       }
       const { startTimeOfRenderArea, endTimeOfRenderArea } = this;
       return totalList.filter((item) => {
-        const timeStartToMs = new Date(item.start).getTime();
-        const timeEndToMs = new Date(item.end).getTime();
-        return (
-          timeStartToMs <= endTimeOfRenderArea &&
-          timeEndToMs >= startTimeOfRenderArea
-        );
+        const { startMs, endMs } = getBlockTimes(item);
+        return startMs <= endTimeOfRenderArea && endMs >= startTimeOfRenderArea;
       });
     }
   }

@@ -3,14 +3,14 @@ import { createStore } from "vuex";
 export default createStore({
   state: {
     filterBlockId: "", // Filtered gantt block ID
-    currentBlock: {}, //Currently selected gantt block
-    currentRow: {}, //Currently selected gantt row
-    cutBlock: {}, //Cut gantt block
-    cutRow: {}, //Cut gantt row
-    targetBlock: {}, //Target gantt block
-    targetRow: {}, //Target gantt row
-    handleBlock: {}, //Right-click action gantt block
-    handleRow: {}, //Right-click action gantt row
+    currentBlock: null, //Currently selected gantt block
+    currentRow: null, //Currently selected gantt row
+    cutBlock: null, //Cut gantt block
+    cutRow: null, //Cut gantt row
+    targetBlock: null, //Target gantt block
+    targetRow: null, //Target gantt row
+    handleBlock: null, //Right-click action gantt block
+    handleRow: null, //Right-click action gantt row
     showRowList: [], // Displayed row data after filtering
     rawRowList: [], // Original row data for reset
     showMovedBlock: true, // Whether to show state before dragging

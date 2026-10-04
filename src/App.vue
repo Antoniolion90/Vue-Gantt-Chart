@@ -160,14 +160,12 @@
 
 <script>
 import dayjs from "dayjs";
-import {cloneDeep} from "lodash-es";
-import {debounce} from "@/utils/tool.js";
+import {debounce, buildAdjustList, applyAdjustList} from "@/utils/tool.js";
 import {mapMutations, mapState} from "vuex";
 import checkAdjust from "./components/demo/checkAdjust.vue";
 import {
   getWidthAbout2Times as _getWidthAbout2Times
 } from "@/utils/gtUtils.js";
-import {checkConflict} from "@/utils/tool.js";
 import {mockDatas} from "@/api/mock-data";
 
 const scaleList = `1,2,3,4,5,6,10,12,15,20,30,60,120,180,240,360,720,1440,2880,4320`
@@ -230,21 +228,13 @@ export default {
       datas: [[]],
       dataKey: "id",
       scaleList: scaleList,
-      scrollToTime: dayjs()
-          .add(1, "day")
-          .toString(),
       hideHeader: false,
-      positionB: {},
-      positionA: {},
-      ganttData: [],
       classifyDialogVisible: false,
       checkDialogVisible: false,
       rowTypes: ["🚅", "🚈", "🚄"],
       speedTypes: ["0~50", "50~100", "100"],
       selectRowTypes: [],
       selectSpeedTypes: [],
-      classifyTypeList: [],
-      rawData: [],
       findList: [],
       currentFindIndex: 0,
       dataSeed: 0
@@ -414,7 +404,6 @@ export default {
           ]
           */
       });
-      this.classifyTypeList = classifyList;
       if (!classifyList.length) {
         this.datas = [
           {
@@ -549,15 +538,7 @@ export default {
       });
     },
     dragBlock() {
-      let adjustList = [];
-      if (this.targetRow && this.currentBlock) {
-        let adjustOjb = checkConflict(this.currentBlock, this.targetRow, this.targetBlock ? this.targetBlock : null);
-        adjustList.push(adjustOjb);
-      }
-      if (this.currentRow && this.targetBlock) {
-        let adjustOjb = checkConflict(this.targetBlock, this.currentRow, this.currentBlock ? this.currentBlock : null);
-        adjustList.push(adjustOjb);
-      }
+      let adjustList = buildAdjustList(this);
 
       // Check whether conflicts exist
       let hasConflict = adjustList.some(adjustObj => {
@@ -567,33 +548,9 @@ export default {
         this.$message.error("Task adjustment has time conflicts, please review!");
         return;
       }
-      let rowList = cloneDeep(this.showRowList);
-      adjustList.forEach(adjustItem => {
-        let currentRow = rowList.find(row => row.id === adjustItem.blockItem.parentId);
-
-        if (this.showMovedBlock) {
-          let movedBeforeBlock = currentRow.gtArray.find(blockItem => {
-            return blockItem.id === adjustItem.blockId;
-          });
-          if (movedBeforeBlock["movedStatus"] === "after") {
-            // Filter out items that were already moved once
-            currentRow.gtArray = currentRow.gtArray.filter(blockItem => blockItem.id !== adjustItem.blockId);
-          } else {
-            // Not moved before, set movedStatus to before
-            movedBeforeBlock["movedStatus"] = "before";
-          }
-        } else {
-          currentRow.gtArray = currentRow.gtArray.filter(blockItem => blockItem.id !== adjustItem.blockId);
-        }
-        let newBlock = cloneDeep(adjustItem.blockItem);
-        let targetRow = rowList.find(row => row.id === adjustItem.targetRowId);
-        newBlock["movedStatus"] = "after";
-        newBlock["parentId"] = targetRow.id;
-        targetRow.gtArray.push(newBlock);
-      });
       this.setCutBlock(null);
       this.setCutRow(null);
-      this.setShowRowList(rowList);
+      this.setShowRowList(applyAdjustList(this.showRowList, adjustList, this.showMovedBlock));
     },
     toggleGroupOpen(index) {
       this.datas[index].isOpen = !this.datas[index].isOpen;

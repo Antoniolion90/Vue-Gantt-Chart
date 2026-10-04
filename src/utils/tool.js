@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { cloneDeep } from "lodash-es";
 /**
  * Whether value is empty
  *
@@ -21,7 +22,6 @@ export function isDef(v) {
 }
 
 export function warn(str) {
-  // eslint-disable-next-line
   console.warn(str)
 }
 
@@ -50,7 +50,8 @@ export function debounce(fn, interval = 500, immediate = false) {
   };
 }
 
-export function throttle(fn, interval = 16) {
+// Runs fn at most once per animation frame with the latest arguments
+export function throttle(fn) {
   let timer = null;
   let lastArgs = null;
   let lastContext = null;
@@ -119,6 +120,60 @@ export function checkConflict(blockItem, row, targetBlockItem) {
     adjustType: "Move",
     conflictList: conflictList
   };
+}
+
+/**
+ * Build adjustment list for a move (or swap, when a target block exists)
+ *
+ * @export
+ * @param {{currentBlock, currentRow, targetBlock, targetRow}} selection
+ * @returns {Array} adjustments produced by checkConflict
+ */
+export function buildAdjustList({ currentBlock, currentRow, targetBlock, targetRow }) {
+  const adjustList = [];
+  if (targetRow && currentBlock) {
+    adjustList.push(checkConflict(currentBlock, targetRow, targetBlock || null));
+  }
+  if (currentRow && targetBlock) {
+    adjustList.push(checkConflict(targetBlock, currentRow, currentBlock || null));
+  }
+  return adjustList;
+}
+
+/**
+ * Apply adjustments to a copy of the row list
+ *
+ * @export
+ * @param {Array} rows source row list, not mutated
+ * @param {Array} adjustList adjustments produced by checkConflict
+ * @param {boolean} showMovedBlock keep a "before" shadow of moved blocks
+ * @returns {Array} new row list
+ */
+export function applyAdjustList(rows, adjustList, showMovedBlock) {
+  const rowList = cloneDeep(rows);
+  adjustList.forEach((adjustItem) => {
+    const currentRow = rowList.find((row) => row.id === adjustItem.blockItem.parentId);
+    const targetRow = rowList.find((row) => row.id === adjustItem.targetRowId);
+    if (!currentRow || !targetRow) return;
+
+    const movedBeforeBlock = currentRow.gtArray.find(
+      (blockItem) => blockItem.id === adjustItem.blockId
+    );
+    if (showMovedBlock && movedBeforeBlock && movedBeforeBlock.movedStatus !== "after") {
+      // Not moved before, keep it as a shadow
+      movedBeforeBlock.movedStatus = "before";
+    } else {
+      // Filter out items that were already moved once
+      currentRow.gtArray = currentRow.gtArray.filter(
+        (blockItem) => blockItem.id !== adjustItem.blockId
+      );
+    }
+    const newBlock = cloneDeep(adjustItem.blockItem);
+    newBlock.movedStatus = "after";
+    newBlock.parentId = targetRow.id;
+    targetRow.gtArray.push(newBlock);
+  });
+  return rowList;
 }
 
 

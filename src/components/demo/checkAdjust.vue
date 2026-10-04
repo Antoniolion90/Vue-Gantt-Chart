@@ -78,8 +78,7 @@
 
 <script>
 import {mapState, mapMutations} from "vuex";
-import {cloneDeep} from "lodash";
-import {checkConflict} from "@/utils/tool.js";
+import {buildAdjustList, applyAdjustList} from "@/utils/tool.js";
 
 export default {
   name: "checkAdjust",
@@ -102,26 +101,11 @@ export default {
   },
   methods: {
     ...mapMutations([
-      "setShowRowList",
-      "setRawRowList"
+      "setShowRowList"
     ]),
     calcConflictList() {
 
-      this.adjustList = [];
-      /*if(!this.targetRow && this.currentBlock){
-        let blockItem = this.currentBlock
-        let adjustOjb = {
-
-        }
-      }*/
-      if (this.targetRow && this.currentBlock) {
-        let adjustOjb = checkConflict(this.currentBlock, this.targetRow, this.targetBlock ? this.targetBlock : null);
-        this.adjustList.push(adjustOjb);
-      }
-      if (this.currentRow && this.targetBlock) {
-        let adjustOjb = checkConflict(this.targetBlock, this.currentRow, this.currentBlock ? this.currentBlock : null);
-        this.adjustList.push(adjustOjb);
-      }
+      this.adjustList = buildAdjustList(this);
 
       if (this.adjustList.length) {
         this.$nextTick(() => {
@@ -180,31 +164,7 @@ export default {
         this.$message.error("Task adjustment has time conflicts, please review!");
         return false;
       } else {
-        let rowList = cloneDeep(this.showRowList);
-        this.tableSelection.forEach(adjustItem => {
-          let currentRow = rowList.find(row => row.id === adjustItem.blockItem.parentId);
-
-          if (this.showMovedBlock) {
-            let movedBeforeBlock = currentRow.gtArray.find(blockItem => {
-              return blockItem.id === adjustItem.blockId;
-            });
-            if (movedBeforeBlock["movedStatus"] === "after") {
-              // Filter out items that were already moved once
-              currentRow.gtArray = currentRow.gtArray.filter(blockItem => blockItem.id !== adjustItem.blockId);
-            } else {
-              // Not moved before, set movedStatus to before
-              movedBeforeBlock["movedStatus"] = "before";
-            }
-          } else {
-            currentRow.gtArray = currentRow.gtArray.filter(blockItem => blockItem.id !== adjustItem.blockId);
-          }
-          let newBlock = cloneDeep(adjustItem.blockItem);
-          let targetRow = rowList.find(row => row.id === adjustItem.targetRowId);
-          newBlock["movedStatus"] = "after";
-          newBlock["parentId"] = targetRow.id;
-          targetRow.gtArray.push(newBlock);
-        });
-        this.setShowRowList(rowList);
+        this.setShowRowList(applyAdjustList(this.showRowList, this.tableSelection, this.showMovedBlock));
         this.$emit("closeDialog");
       }
     }

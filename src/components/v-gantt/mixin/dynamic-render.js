@@ -30,7 +30,12 @@ const dynamicRender = {
       type: Number,
       default: 0
     },
-    groupIndex: Number
+    groupIndex: Number,
+    // Offset of the group from the top of the chart
+    groupTop: {
+      type: Number,
+      default: 0
+    }
   },
 
   data() {
@@ -75,6 +80,12 @@ const dynamicRender = {
     },
     preload() {
       this.sliceData();
+    },
+    groupTop() {
+      this.sliceData();
+    },
+    isOpen() {
+      this.sliceData();
     }
   },
 
@@ -96,7 +107,7 @@ const dynamicRender = {
         preload,
         datas,
         scrollTop,
-        groupIndex,
+        groupTop,
         datas: groupDatas
       } = this;
 
@@ -112,16 +123,6 @@ const dynamicRender = {
         this.startRenderNum = 0;
         this.endRenderNum = datas.length;
         return;
-      }
-
-      // Calculate the start position of the group relative to the container
-      // This is a fixed value for each group, assuming row heights are constant
-      let groupTop = 0;
-      const allDatas = this.$parent.datas || [];
-      for (let i = 0; i < groupIndex; i++) {
-        const group = allDatas[i];
-        const groupRows = group.isOpen ? (group.children ? group.children.length : 0) + 1 : 1;
-        groupTop += groupRows * cellHeight;
       }
 
       const groupHeight = (this.isOpen ? groupDatas.length + 1 : 1) * cellHeight;

@@ -16,7 +16,6 @@ const app = createApp(App);
 app.config.globalProperties.$bus = bus;
 app.config.globalProperties.$loading = ElLoading.service;
 app.config.globalProperties.$message = ElMessage;
-app.provide("$bus", bus);
 app.use(ElLoading);
 app.use(store);
 app.use(contextMenu);

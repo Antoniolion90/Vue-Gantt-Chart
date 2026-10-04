@@ -47,8 +47,8 @@
                 :cellWidth="cellWidth"
                 :titleHeight="titleHeight"
                 :scale="scale"
-                :startTimeOfRenderArea="dayjs(startTimeOfRenderArea)"
-                :endTimeOfRenderArea="dayjs(endTimeOfRenderArea)"
+                :startTimeOfRenderArea="startDayjsOfRenderArea"
+                :endTimeOfRenderArea="endDayjsOfRenderArea"
                 :getPositionOffset="getPositionOffset"
             >
               <template v-slot="{ day, getTimeScales }">
@@ -98,14 +98,14 @@
             <div class="left-scroll-wrapper" ref="leftbarWrapper">
               <LeftBar
                   v-for="(blockGroup, index) in datas"
-                  :key="index"
+                  :key="groupKeys[index]"
                   :datas="blockGroup.children || []"
                   :groupType="blockGroup.groupType || {}"
                   :group-index="index"
+                  :group-top="groupTops[index]"
                   :is-open="blockGroup.isOpen"
                   :dataKey="dataKey"
                   :scrollTop="scrollTop"
-                  :unVisibleHeight="unVisibleHeight"
                   :totalHeight="totalHeight"
                   :heightOfBlocksWrapper="heightOfBlocksWrapper"
                   :cellHeight="cellHeight"
@@ -121,13 +121,13 @@
             <div class="scroller" :style="{ width: totalWidth + 'px' }">
               <BlockGroup
                   v-for="(blockGroup, index) in datas"
-                  :key="index"
+                  :key="groupKeys[index]"
                   :datas="blockGroup.children || []"
                   :group-index="index"
+                  :group-top="groupTops[index]"
                   :is-open="blockGroup.isOpen"
                   :scrollTop="scrollTop"
                   :scrollLeft="scrollLeft"
-                  :unVisibleHeight="unVisibleHeight"
                   :totalHeight="totalHeight"
                   :heightOfBlocksWrapper="heightOfBlocksWrapper"
                   :cellWidth="cellWidth"
@@ -201,7 +201,7 @@ import {
   isDayScale,
   scaleList
 } from "@/utils/timeLineUtils.js";
-import {throttle, noop, warn} from "@/utils/tool.js";
+import {throttle, warn} from "@/utils/tool.js";
 import {
   getPositionOffset as _getPositionOffset,
   getWidthAbout2Times as _getWidthAbout2Times
@@ -230,7 +230,10 @@ export default {
   },
 
   props: {
-    currentTime: dayjs(),
+    currentTime: {
+      type: Object,
+      default: () => dayjs()
+    },
     startTime: {
       default: () => dayjs(),
       validator(date) {
@@ -246,10 +249,6 @@ export default {
         if (!ok) warn(`Invalid end time ${date}`);
         return ok;
       }
-    },
-    enableGrab: {
-      type: Boolean,
-      default: true
     },
     cellWidth: {
       type: Number,
@@ -282,21 +281,12 @@ export default {
       type: String,
       default: undefined
     },
-    itemKey: {
-      type: String,
-      default: undefined
-    },
     showCurrentTime: {
       type: Boolean,
       default: false
     },
     timeLines: {
       type: Array
-    },
-    scrollToTime: {
-      validator(date) {
-        return dayjs(date).isValid();
-      }
     },
     hideHeader: {
       type: Boolean,
@@ -327,12 +317,6 @@ export default {
       heightOfBlocksWrapper: 0,
       widthOfBlocksWrapper: 0,
       currentDay: dayjs(),
-      dayjs,
-      noop,
-      preTouchPosition: {
-        x: 0,
-        y: 0
-      },
       scroller: null,
       resizeObserver: null,
       onScrollToPosition: null,
@@ -393,23 +377,33 @@ export default {
       }
       return height;
     },
+    // Offset of each group from the top of the chart
+    groupTops() {
+      const {datas, cellHeight} = this;
+      const tops = [];
+      let top = 0;
+      for (let i = 0; i < datas.length; i++) {
+        tops.push(top);
+        const rowLength = datas[i].isOpen ? (datas[i].children?.length || 0) + 1 : 1;
+        top += rowLength * cellHeight;
+      }
+      return tops;
+    },
+    // Stable keys for groups: group id or its type, de-duplicated by index
+    groupKeys() {
+      const seen = new Set();
+      return this.datas.map((group, index) => {
+        let key = group.id ?? JSON.stringify(group.groupType ?? {});
+        if (seen.has(key)) key = `${key}#${index}`;
+        seen.add(key);
+        return key;
+      });
+    },
     beginTimeOfTimeLine() {
       return getBeginTimeOfTimeLine(this.start, this.scale);
     },
     beginTimeOfTimeLineToString() {
       return this.beginTimeOfTimeLine.toString();
-    },
-    unVisibleHeight() {
-      return window.innerHeight - this.heightOfBlocksWrapper;
-    },
-    availableScrollLeft() {
-      // Without subtracting this 1, scrolling past timeline end gradually overflows
-      const {totalWidth, widthOfBlocksWrapper} = this;
-      return totalWidth - widthOfBlocksWrapper - 1;
-    },
-    availableScrollTop() {
-      const {totalHeight, heightOfBlocksWrapper} = this;
-      return totalHeight - heightOfBlocksWrapper - 1;
     },
     actualHeaderHeight() {
       return this.hideHeader ? 0 : this.titleHeight;
@@ -445,6 +439,12 @@ export default {
           .add(((scrollLeft + renderWidth) / cellWidth) * scale, "minute")
           .toDate()
           .getTime();
+    },
+    startDayjsOfRenderArea() {
+      return dayjs(this.startTimeOfRenderArea);
+    },
+    endDayjsOfRenderArea() {
+      return dayjs(this.endTimeOfRenderArea);
     }
   },
   watch: {
@@ -452,6 +452,11 @@ export default {
       this.$nextTick(() => {
         this.scroller?.refresh();
         this.scrollHandler();
+      });
+    },
+    totalWidth() {
+      this.$nextTick(() => {
+        this.scroller?.refresh();
       });
     }
   },
@@ -464,6 +469,9 @@ export default {
         const cr = entry.contentRect;
         this.heightOfBlocksWrapper = cr.height;
         this.widthOfBlocksWrapper = cr.width;
+      });
+      this.$nextTick(() => {
+        this.scroller?.refresh();
       });
     });
     this.resizeObserver = new window.ResizeObserver(observeContainer);
@@ -479,10 +487,6 @@ export default {
       scrollbar: true,
       useTransition: true
     });
-    setTimeout(() => {
-      this.scroller?.refresh();
-    }, 1000);
-
     this.scroller.on("scroll", throttle(this.scrollHandler));
     this.onScrollToPosition = (position) => {
       this.scroller?.scrollTo(position.x, position.y, 600);
@@ -533,7 +537,7 @@ export default {
 
       /* Calculate time from scroll position */
       let mileSeconds = -(x / this.cellWidth) * this.scale * 60 * 1000;
-      let scrollTime = new Date(this.startTime).getTime() + mileSeconds;
+      let scrollTime = this.beginTimeOfTimeLine.valueOf() + mileSeconds;
       this.currentDay = dayjs(scrollTime);
     },
     /* Scroll forward by one day */
@@ -550,7 +554,7 @@ export default {
         return false;
       } else {
         this.currentDay = tempDay;
-        let width = this.getWidthAbout2Times(this.startTime, tempDay);
+        let width = Math.max(0, this.getPositionOffset(tempDay.toString()));
         if (this.scroller) {
           this.scroller.scrollTo(-width, this.scroller.y, 400);
         }
@@ -569,7 +573,7 @@ export default {
         return false;
       } else {
         this.currentDay = tempDay;
-        let width = this.getWidthAbout2Times(this.startTime, tempDay);
+        let width = this.getPositionOffset(tempDay.toString());
         if (this.scroller) {
           this.scroller.scrollTo(-width, this.scroller.y, 400);
         }
@@ -650,7 +654,7 @@ export default {
     },
     /*Swap*/
     switchBlock() {
-      if (this.cutBlock && this.currentBlock) {
+      if (this.cutBlock && this.handleBlock) {
         this.setCurrentBlock(this.cutBlock);
         this.setCurrentRow(this.cutRow);
         this.setTargetBlock(this.handleBlock);
@@ -659,7 +663,8 @@ export default {
       }
     },
     dropToRow(event, rowData) {
-      if (rowData.id === this.currentRow.id) return false;
+      if (!this.currentBlock) return false;
+      if (this.currentRow && rowData.id === this.currentRow.id) return false;
       this.setCurrentRow(null);
       this.setTargetBlock(null);
       this.setTargetRow(rowData);

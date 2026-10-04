@@ -59,14 +59,14 @@
 import { mapState } from "vuex"
 import dayjs from "dayjs"
 
-const NOW_PLAN = "#D5F8EA"
-const FURTHER_PLAN = "#BFF2FE"
-const PAST_PLAN = "#F2F2F2"
+// Block currently sent to back by double click
+let loweredItem = null
+
 export default {
   name: "task-item",
   props: {
     blockData: Object,
-    currentTime: dayjs,
+    currentTime: Object,
     cellHeight: Number,
     getPositionOffset: Function,
     getWidthAbout2Times: Function
@@ -75,15 +75,12 @@ export default {
   data() {
     return {
       showDetail: false,
-      dayjs: dayjs,
       zIndex: 2
     }
   },
   computed: {
     ...mapState([
       "filterBlockId",
-      "currentBlock",
-      "currentRow",
       "cutBlock",
     ]),
     canDrag() {
@@ -109,14 +106,6 @@ export default {
     },
     endToString() {
       return dayjs(this.blockData.end).format("HH:mm")
-    },
-    currentClass() {
-      const isCurrentBlock = this.currentBlock ? this.currentBlock.id === this.blockData.id : false
-      const isCurrentRow = this.currentRow ? this.currentRow.id === this.blockData.parentId : true
-      if (isCurrentBlock && isCurrentRow) {
-        return 'current-select'
-      }
-      return ''
     },
     cutClass() {
       const isCutBlock = this.cutBlock ? this.cutBlock.id === this.blockData.id : false
@@ -158,21 +147,17 @@ export default {
     hideDetailInfo() {
       this.showDetail = false
     },
+    // Send this block to back; only the previously lowered block needs restoring
     changeZIndex() {
-      this.$bus.$emit('upzIndex')
+      if (loweredItem && loweredItem !== this) {
+        loweredItem.zIndex = 2
+      }
+      loweredItem = this
       this.zIndex = 1
     },
-    upZIndex() {
-      this.zIndex = 2
-    },
-  },
-  mounted() {
-    this.$bus.$on('hideDetailInfo', this.hideDetailInfo)
-    this.$bus.$on('upzIndex', this.upZIndex)
   },
   beforeUnmount() {
-    this.$bus.$off('hideDetailInfo', this.hideDetailInfo)
-    this.$bus.$off('upzIndex', this.upZIndex)
+    if (loweredItem === this) loweredItem = null
   }
 }
 </script>

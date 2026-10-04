@@ -13,8 +13,6 @@ const nameList = "Hope,SwiftWing,Lightbringer,Scout,PowerGod,Officer,LightningMe
 
 const typeList = "🚅,🚈,🚄".split(",");
 
-let colNum = 10;
-let times = [new Date(2000, 10, 10, 10, 10), new Date(2000, 10, 11, 10, 10)];
 
 
 function generateRow(index, colNum, times) {
@@ -26,7 +24,7 @@ function generateRow(index, colNum, times) {
   const rgb = "rgb" + color;
 
   const gtArray = [];
-  let tempStart = dayjs(times[0]);
+  let tempStart;
   let tempEnd = dayjs(times[0]);
 
   for (let i = 0; i < colNum; i++) {

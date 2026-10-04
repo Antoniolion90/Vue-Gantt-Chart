@@ -67,10 +67,6 @@ export default {
   mixins: [dr],
   props: {
     dataKey: String,
-    unVisibleHeight: {
-      type: Number,
-      required: true
-    },
     datas: {
       type: Array,
       required: true

@@ -1,5 +1,3 @@
-// import dayjs from "dayjs";
-
 export const scaleList = [
   1,
   2,
@@ -93,14 +91,10 @@ export function calcScalesAbout2Times(timeStart, timeEnd, scale = 60) {
 
   validateScale(scale);
 
-  let startBlocksTime = getBeginTimeOfTimeLine(timeStart, scale);
-  let result = 0;
-  while (!startBlocksTime.isAfter(timeEnd)) {
-    result++;
-    startBlocksTime = startBlocksTime.add(scale, "minute");
-  }
-
-  return result;
+  const startBlocksTime = getBeginTimeOfTimeLine(timeStart, scale);
+  const diff = timeEnd.valueOf() - startBlocksTime.valueOf();
+  // Count of scale steps k >= 0 that satisfy begin + k * scale <= end
+  return diff < 0 ? 0 : Math.floor(diff / (scale * 60 * 1000)) + 1;
 }
 
 

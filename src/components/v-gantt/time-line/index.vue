@@ -51,10 +51,6 @@ import {
   getBeginTimeOfTimeLine
 } from "@/utils/timeLineUtils.js";
 
-const START_DAY = Symbol();
-const MIDDLE_DAY = Symbol();
-const END_DAY = Symbol();
-
 function isSameDay(one, two) {
   return one.isSame(two, "day");
 }
@@ -68,10 +64,10 @@ export default {
 
   props: {
     start: {
-      type: dayjs
+      type: Object
     },
     end: {
-      type: dayjs
+      type: Object
     },
     cellWidth: {
       type: Number
@@ -82,8 +78,8 @@ export default {
     scale: {
       type: Number
     },
-    endTimeOfRenderArea: [dayjs, null],
-    startTimeOfRenderArea: [dayjs, null],
+    endTimeOfRenderArea: Object,
+    startTimeOfRenderArea: Object,
     getPositionOffset: {
       type: Function
     },
@@ -154,6 +150,15 @@ export default {
     }
   },
 
+  created() {
+    // Scales only depend on the day and start/end/scale, so they are cached per day
+    this.timeScaleCache = new Map();
+    this.$watch(
+      () => [this.start, this.end, this.scale],
+      () => this.timeScaleCache.clear()
+    );
+  },
+
   methods: {
     isInRenderingDayRange(day) {
       const { startDayOfRenderArea, endDayOfRenderArea, scale } = this;
@@ -168,52 +173,41 @@ export default {
       } else return !!isSameOrBetween(startDayOfRenderArea, endDayOfRenderArea, day);
     },
     /**
-     * Get time scale array
+     * Get time scale array (cached per day)
      *
      * @param {dayjs} date
-     * @returns {[string]} All data entries that need rendering in this data set
+     * @returns {[dayjs]} All time scales of the day
      */
     getTimeScales(date) {
-      const { start, end } = this;
-
-      if (isSameDay(date, start)) {
-        return this.generateTimeScale(START_DAY);
-      } else if (isSameDay(date, end)) {
-        return this.generateTimeScale(END_DAY);
-      } else {
-        return this.generateTimeScale(MIDDLE_DAY);
+      const key = date.valueOf();
+      let scales = this.timeScaleCache.get(key);
+      if (!scales) {
+        scales = this.generateTimeScale(date);
+        this.timeScaleCache.set(key, scales);
       }
+      return scales;
     },
     /**
      * Generate time scale array
      *
-     * @param {Symbol} type
-     * @returns {[string]} All data entries that need rendering in this data set
+     * @param {dayjs} date
+     * @returns {[dayjs]} All time scales of the day
      */
-    generateTimeScale(type) {
+    generateTimeScale(date) {
       const totalblock = [];
       const { start, end, scale } = this;
       let a, b;
-      switch (type) {
-        case START_DAY: //same day as start
-          a = getBeginTimeOfTimeLine(start, scale);
-          //special case when start and end are on same day
-          if (isSameDay(start, end)) {
-            b = end;
-          } else {
-            b = start.endOf("day");
-          }
-          break;
-        case END_DAY: //same day as end
-          a = end.startOf("day");
-          b = end;
-          break;
-        case MIDDLE_DAY: //days between start and end
-          a = start.startOf("day");
-          b = start.endOf("day");
-          break;
-        default:
-          throw new TypeError("Invalid calculation type");
+      if (isSameDay(date, start)) {
+        a = getBeginTimeOfTimeLine(start, scale);
+        //special case when start and end are on same day
+        b = isSameDay(start, end) ? end : start.endOf("day");
+      } else if (isSameDay(date, end)) {
+        a = end.startOf("day");
+        b = end;
+      } else {
+        //days between start and end
+        a = date.startOf("day");
+        b = date.endOf("day");
       }
       while (!a.isAfter(b)) {
         totalblock.push(a);
